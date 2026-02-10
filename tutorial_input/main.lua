@@ -1,12 +1,17 @@
 Object = require("libraries.classic.classic")
 Input = require("libraries.boipushy.input")
 Timer = require("libraries.hump.timer")
+Camera = require("libraries.STALKER-X.Camera")
 
 function love.load()
     local object_files = {}
     recursiveEnumerate('objects', object_files)
     requireFiles(object_files)
 
+    camera = Camera()
+    camera:setFollowLerp(0.2)
+    camera:setFollowLead(3)
+    camera:setFollowStyle('LOCKON')
     timer = Timer()
     input = Input()
     input:bind('w', 'up')
@@ -22,10 +27,15 @@ end
 function love.update(dt)
     timer:update(dt)
     Player:update(dt)
+    camera:update(dt)
+    camera:follow(Player.X, Player.Y)
 end
 
 function love.draw()
+    camera:attach()
     Player:draw()
+    love.graphics.circle('fill', 10, 10, 10)
+    camera:detach()
 end
 
 

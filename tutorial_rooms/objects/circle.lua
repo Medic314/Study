@@ -1,8 +1,8 @@
 Circle = Object:extend()
 
 function Circle:new(x, y, radius)
-    self.x = x or 0
-    self.y = y or 0
+    self.x = x or 400
+    self.y = y or 300
     self.radius = radius or 50
     self.creation_time = love.timer.getTime()
 end

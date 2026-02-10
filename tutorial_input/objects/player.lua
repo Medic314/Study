@@ -5,18 +5,10 @@ function Player:init()
     self.Y = 100
     self.DX = 0
     self.DY = 0
-    self.outer_radius = {outer_radius = 20}
-    self.radius = {radius = 10}
-    self.graphic = HyperCircle(self.X, self.Y, self.radius.radius, 5, self.outer_radius.outer_radius)
-    self.big = 0 
+
 end
 
 function Player:update(dt)
-    if input:pressed('big') then if self.big == 0 then self.big = 1 else self.big = 0 end end
-    if input:pressed('big') then if self.big == 1 then timer:tween(1, self.outer_radius, {outer_radius = 35}, 'in-bounce') end end
-    if input:pressed('big') then if self.big == 0 then timer:tween(1, self.outer_radius, {outer_radius = 20}, 'in-bounce') end end
-    if input:pressed('big') then if self.big == 1 then timer:tween(1.5, self.radius, {radius = 25}, 'in-bounce') end end
-    if input:pressed('big') then if self.big == 0 then timer:tween(1.5, self.radius, {radius = 10}, 'in-bounce') end end
 
     if input:down('up') then self.DY = self.DY - 0.3 if self.DY < -3 then self.DY = -3 end self.Y = self.Y + self.DY end
     if input:down('left') then self.DX = self.DX - 0.3 if self.DX < -3 then self.DX = -3 end self.X = self.X + self.DX end
@@ -27,6 +19,7 @@ function Player:update(dt)
     if input:pressed('left') then self.DX = -0.6 end
     if input:pressed('down') then self.DY = 0.6 end
     if input:pressed('right') then self.DX = 0.6 end
+    
 
     if self.DX < 0 then self.DX = self.DX + 0.1 self.X = self.X + self.DX end
     if self.DX > 0 then self.DX = self.DX - 0.1 self.X = self.X + self.DX end
@@ -37,8 +30,6 @@ function Player:update(dt)
 end
 
 function Player:draw()
-    self.graphic.x, self.graphic.y = self.X, self.Y
-    self.graphic.outer_radius = self.outer_radius.outer_radius
-    self.graphic.radius = self.radius.radius
-    self.graphic:draw()
+    wiz = love.graphics.newImage("evil_wizard.png")
+    love.graphics.draw(wiz, self.X, self.Y)
 end

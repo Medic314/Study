@@ -6,19 +6,25 @@ function love.load()
     local object_files = {}
     recursiveEnumerate('objects', object_files)
     requireFiles(object_files)
+    input = Input()
 
-    
+    current_room = nil
+
+    input:bind('1', gotoRoom(Circleroom))
+    input:bind('2', gotoRoom(Rectangleroom))
 end
 
 function love.update(dt)
-    
+    if current_room then current_room:update(dt) end
 end
 
 function love.draw()
-    
+    if current_room then current_room:draw() end
 end
 
-
+function gotoRoom(room_type, ...)
+    current_room = _G[room_type](...)
+end
 
 
 function recursiveEnumerate(folder, file_list)
