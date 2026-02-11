@@ -1,17 +1,22 @@
 Object = require("libraries.classic.classic")
 Input = require("libraries.boipushy.input")
 Timer = require("libraries.hump.timer")
+Utils = require("libraries.general.utils")
 
 function love.load()
     local object_files = {}
+    local room_files = {}
+    input = Input()
+
+    recursiveEnumerate('rooms', room_files)
+    requireFiles(room_files)
+
     recursiveEnumerate('objects', object_files)
     requireFiles(object_files)
-    input = Input()
 
     current_room = nil
 
-    input:bind('1', gotoRoom(Circleroom))
-    input:bind('2', gotoRoom(Rectangleroom))
+    gotoRoom("Stage")
 end
 
 function love.update(dt)

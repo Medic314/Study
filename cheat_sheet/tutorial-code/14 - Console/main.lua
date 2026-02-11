@@ -8,7 +8,7 @@ Vector = require 'libraries/hump/vector'
 draft = require('libraries/draft/draft')()
 
 require 'libraries/utf8'
-require 'GameObject'
+require 'tutorial_rooms.objects.GameObject'
 require 'utils'
 require 'globals'
 require 'tree'

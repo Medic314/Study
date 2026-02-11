@@ -9,7 +9,7 @@ draft = require('libraries/draft/draft')()
 bitser = require 'libraries/bitser/bitser'
 
 require 'libraries/utf8'
-require 'GameObject'
+require 'tutorial_rooms.objects.GameObject'
 require 'utils'
 require 'globals'
 require 'tree'

@@ -6,7 +6,7 @@ Camera = require 'libraries/hump/camera'
 Physics = require 'libraries/windfield'
 Vector = require 'libraries/hump/vector'
 
-require 'GameObject'
+require 'tutorial_rooms.objects.GameObject'
 require 'utils'
 require 'globals'
 

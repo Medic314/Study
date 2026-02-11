@@ -9,7 +9,7 @@ function love.load()
     requireFiles(object_files)
 
     camera = Camera()
-    camera:setFollowLerp(0.2)
+    camera:setFollowLerp(0.1)
     camera:setFollowLead(3)
     camera:setFollowStyle('LOCKON')
     timer = Timer()
@@ -20,12 +20,20 @@ function love.load()
     input:bind('d', 'right')
 
     input:bind("space", "big")
+
+    Gunl = Gun()
+    Gunr = Gun()
+    Gunl:new(true)
+    Gunr:new(false)
+
     Player = Player()
     Player:init()
 end
 
 function love.update(dt)
     timer:update(dt)
+    Gunl:update(dt, Player.X, Player.Y)
+    Gunr:update(dt, Player.X, Player.Y)
     Player:update(dt)
     camera:update(dt)
     camera:follow(Player.X, Player.Y)
@@ -34,7 +42,9 @@ end
 function love.draw()
     camera:attach()
     Player:draw()
-    love.graphics.circle('fill', 10, 10, 10)
+    Gunl:draw()
+    Gunr:draw()
+    love.graphics.circle('fill', 0, 0, 10)
     camera:detach()
 end
 

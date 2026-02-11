@@ -3,7 +3,7 @@ Timer = require 'libraries/enhanced_timer/EnhancedTimer'
 Input = require 'libraries/boipushy/Input'
 fn = require 'libraries/moses/moses'
 
-require 'GameObject'
+require 'tutorial_rooms.objects.GameObject'
 require 'utils'
 
 function love.load()

@@ -5,7 +5,7 @@ fn = require 'libraries/moses/moses'
 Camera = require 'libraries/hump/camera'
 Physics = require 'libraries/windfield'
 
-require 'GameObject'
+require 'tutorial_rooms.objects.GameObject'
 require 'utils'
 
 function love.load()

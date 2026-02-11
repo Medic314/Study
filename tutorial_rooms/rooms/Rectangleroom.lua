@@ -9,5 +9,5 @@ function Rectangleroom:update(dt)
 end
 
 function Rectangleroom:draw()
-    love.graphics.rectangle('fill',300,400,50,25)
+    love.graphics.rectangle('fill',400,300,200, 100)
 end
