@@ -4,52 +4,37 @@ Timer = require("libraries.hump.timer")
 Camera = require("libraries.STALKER-X.Camera")
 
 function love.load()
+    love.graphics.setDefaultFilter('nearest', 'nearest')
+    love.graphics.setLineStyle('rough')
+    
     local object_files = {}
     recursiveEnumerate('objects', object_files)
     requireFiles(object_files)
 
-    camera = Camera()
-    camera:setFollowLerp(0.1)
-    camera:setFollowLead(3)
-    camera:setFollowStyle('LOCKON')
-    timer = Timer()
-    input = Input()
-    input:bind('w', 'up')
-    input:bind('a', 'left')
-    input:bind('s', 'down')
-    input:bind('d', 'right')
+    local room_files = {}
+    recursiveEnumerate('rooms', room_files)
+    requireFiles(room_files)
 
-    input:bind("space", "big")
+    
+    stage = Stage:new()
 
-    Gunl = Gun()
-    Gunr = Gun()
-    Gunl:new(true)
-    Gunr:new(false)
-
-    Player = Player()
-    Player:init()
+    Stage:init()
 end
 
 function love.update(dt)
-    timer:update(dt)
-    Gunl:update(dt, Player.X, Player.Y)
-    Gunr:update(dt, Player.X, Player.Y)
-    Player:update(dt)
-    camera:update(dt)
-    camera:follow(Player.X, Player.Y)
+    Stage:update(dt)
 end
 
 function love.draw()
-    camera:attach()
-    Player:draw()
-    Gunl:draw()
-    Gunr:draw()
-    love.graphics.circle('fill', 0, 0, 10)
-    camera:detach()
+    Stage:draw()
+    
 end
 
 
-
+function resize(s)
+    love.window.setMode(s*gw, s*gh)
+    sx, sy = s, s
+end
 
 function recursiveEnumerate(folder, file_list)
     local items = love.filesystem.getDirectoryItems(folder)
