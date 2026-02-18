@@ -27,7 +27,6 @@ end
 
 function love.draw()
     Stage:draw()
-    
 end
 
 
