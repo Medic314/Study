@@ -1,4 +1,5 @@
 Object = require("libraries.classic.classic")
+GameObject = require("objects.GameObject")
 Input = require("libraries.boipushy.input")
 Timer = require("libraries.hump.timer")
 Camera = require("libraries.STALKER-X.Camera")
@@ -17,24 +18,30 @@ function love.load()
     recursiveEnumerate('rooms', room_files)
     requireFiles(room_files)
 
-    
-    stage = Stage:new()
+    timer = Timer()
+    input = Input()
+    camera = Camera()
 
-    Stage:init()
+    current_room = nil
+    gotoRoom('Stage')
 end
 
 function love.update(dt)
-    Stage:update(dt)
+    if current_room then current_room:update(dt) end
 end
 
 function love.draw()
-    Stage:draw()
+    if current_room then current_room:draw() end
 end
 
 
 function resize(s)
     love.window.setMode(s*gw, s*gh)
     sx, sy = s, s
+end
+
+function gotoRoom(room_type, ...)
+    current_room = _G[room_type](...)
 end
 
 function recursiveEnumerate(folder, file_list)

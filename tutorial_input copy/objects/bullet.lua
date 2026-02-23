@@ -1,8 +1,8 @@
-Bullet = Object:extend()
+Bullet = GameObject:extend()
 
 function Bullet:new(x, y, rot, l)
-    self.x = x or Player.X
-    self.y = y or Player.Y
+    self.x = x
+    self.y = y
     self.rot = rot
     
     self.l = l
@@ -12,9 +12,9 @@ function Bullet:new(x, y, rot, l)
     self.rv = 1.66*math.pi
     
     if l == true then
-        self.v = 500
+        self.v = 600
     else
-        self.v = 200
+        self.v = 300
     end
 
     if l == true then

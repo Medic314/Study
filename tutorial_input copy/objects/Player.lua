@@ -1,14 +1,17 @@
-Player = Object:extend()
+Player = GameObject:extend()
 
-function Player:init()
-    self.X = gw/2
-    self.Y = gh/2
+function Player:new(area, x, y, opts)
+    Player.super.new(self, area, x, y, opts)
+    self.X = x
+    self.Y = y
     self.A = 450
     self.DX, self.DY = 0, 0
+    self.dead = false
     bullets = {}
 end
 
 function Player:update(dt)
+    Player.super.update(self, dt)
     if input:pressed('one') then resize(1) end
     if input:pressed('two') then resize(2) end
     if input:pressed('three') then resize(3) end
@@ -33,6 +36,7 @@ function Player:update(dt)
             bullets[i]:update(dt)
     end
 
+    PlayerX, PlayerY = self.X, self.Y
 end
 
 function Player:draw()
