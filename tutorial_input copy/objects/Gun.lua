@@ -6,8 +6,40 @@ function Gun:new(area, x, y, opts)
     self.X = x
     self.Y = y
     self.opts = opts
+    self.charge = 0
+
     if self.opts.l then self.D = -20 end
     if not self.opts.l then self.D = 20 end
+
+    function Gun:Basic_Bullet(area, rot, l)
+        area:addGameObject('Bullet', PlayerX, PlayerY, {rot=rot, l=l, type="basic"})
+    end
+
+    function Gun:Charge_Bullet(charge)
+        if charge < 10 then
+                    charge = charge + 2
+                else
+                    charge = charge + 0.25
+                end
+                if charge > 15 then
+                    charge = 15
+                end
+
+                print(charge)
+    end
+
+    function Gun:Charge_Bullet_Release(area, rot, charge, l)
+        if charge >= 10 then
+            area:addGameObject('Bullet', PlayerX, PlayerY, {rot=rot, l=l, type="charge", size=charge/10})
+        end
+        charge = 0
+    end
+
+    self.basic = {interval=0.25, downfunc=Gun:Basic_Bullet(self.area, self.opts.l)}
+    self.charge = {interval=0.1, downfunc=Gun:Charge_Bullet(self.charge), releasefunc=Gun:Charge_Bullet_Release(self.area, self.charge, self.opts.l)}
+
+    self.lweapon = self.basic
+    self.rweapon = self.charge
 end
 
 function Gun:update(dt)
@@ -25,18 +57,15 @@ function Gun:update(dt)
     if dy < 0 then self.rot = self.rot + math.pi end
 
     if self.l then
-        if input:down('left_click', 0.25) then 
-            --bullet = Bullet()
-            --bullet_instance = bullet:new(self.X, self.Y, self.rot, true)
-            --table.insert(bullets, bullet)
-            print('lmb')
+        if input:down('left_click', self.lweapon.interval) then
+            self.lweapon.downfunc()
         end
     else
-        if input:down('right_click', 0.5) then 
-            --bullet = Bullet()
-            --bullet_instance = bullet:new(self.X, self.Y, self.rot, false)
-            --table.insert(bullets, bullet)
-            print('rmb')
+        if input:down('right_click', self.rweapon.interval) then
+            self.rweapon.downfunc()
+        end
+        if input:released('right_click') then
+            self.rweapon.releasefunc()
         end
     end
 

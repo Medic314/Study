@@ -6,7 +6,7 @@ sy = 1
 function love.conf(t)
     t.console = true                  -- Attach a console (boolean, Windows only)
  
-    t.window.title = "BYTEPATH" -- The window title (string)
+    t.window.title = "Wizard Game" -- The window title (string)
     t.window.icon = nil                -- Filepath to an image to use as the window's icon (string)
     t.window.width = gw -- The window width (number)
     t.window.height = gh -- The window height (number)

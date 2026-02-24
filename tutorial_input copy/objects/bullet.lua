@@ -1,37 +1,43 @@
 Bullet = GameObject:extend()
 
-function Bullet:new(x, y, rot, l)
+function Bullet:new(area, x, y, opts)
+    Bullet.super.new(self, area, x, y, opts)
+    self.area = area
     self.x = x
     self.y = y
-    self.rot = rot
-    
-    self.l = l
+    self.opts = opts
+    self.dead = false
+
+    self.l = self.opts.l
+    self.r = self.opts.rot
+    self.type = self.opts.type
+
+    self.speed = self.opts.speed or 1
+    self.size = self.opts.size or 1
 
     self.a = 100
-    self.r = rot
     self.rv = 1.66*math.pi
     
-    if l == true then
-        self.v = 600
-    else
-        self.v = 300
+    if self.type == "basic" then
+        self.v = self.speed*600
+        self.w = self.size*12
+        self.culltime = 1.25
+    elseif self.type == "charge" then
+        self.v = self.speed*300
+        self.w = self.size*24
+        self.culltime = 2.5
     end
 
-    if l == true then
-        self.w = 12
-    else
-        self.w = 24
-    end
-
-    self.collider = Stage.area.world:newCircleCollider(self.x, self.y, self.w)
+    self.collider = self.area.world:newCircleCollider(self.x, self.y, self.w)
     self.collider:setObject(self)
-    timer:after(3, function() print("fb") end)
+    timer:after(self.culltime, function() self.dead = true end)
 end
 
 function Bullet:update(dt)
-    
-    self.x = self.x + self.v*math.cos(self.r)*dt
-    self.y = self.y + self.v*math.sin(self.r)*dt
+    local dx = self.x + self.v*math.cos(self.r)*dt
+    local dy = self.y + self.v*math.sin(self.r)*dt
+    self.x = dx
+    self.y = dy
 
     self.collider:setPosition(self.x, self.y)
 end

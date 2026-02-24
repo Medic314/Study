@@ -7,6 +7,7 @@ function Player:new(area, x, y, opts)
     self.A = 450
     self.DX, self.DY = 0, 0
     self.dead = false
+
     bullets = {}
 end
 

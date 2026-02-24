@@ -31,6 +31,8 @@ function Stage:init()
     PlayerX = 0
     PlayerY = 0
 
+    self.area:addGameObject('Grid', -300, -300)
+
     self.area:addGameObject('Player', 0, 0)
     self.area:addGameObject('Gun', PlayerX, PlayerY, {l=true})
     self.area:addGameObject('Gun', PlayerX, PlayerY, {l=false})

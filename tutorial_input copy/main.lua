@@ -1,5 +1,4 @@
 Object = require("libraries.classic.classic")
-GameObject = require("objects.GameObject")
 Input = require("libraries.boipushy.input")
 Timer = require("libraries.hump.timer")
 Camera = require("libraries.STALKER-X.Camera")
@@ -9,14 +8,14 @@ Physics = require("libraries.windfield")
 function love.load()
     love.graphics.setDefaultFilter('nearest', 'nearest')
     love.graphics.setLineStyle('rough')
-    
-    local object_files = {}
-    recursiveEnumerate('objects', object_files)
-    requireFiles(object_files)
 
     local room_files = {}
     recursiveEnumerate('rooms', room_files)
     requireFiles(room_files)
+    
+    local object_files = {}
+    recursiveEnumerate('objects', object_files)
+    requireFiles(object_files)
 
     timer = Timer()
     input = Input()
