@@ -4,7 +4,7 @@ function Player:new(area, x, y, opts)
     Player.super.new(self, area, x, y, opts)
     self.X = x
     self.Y = y
-    self.A = 450
+    self.A = 300
     self.DX, self.DY = 0, 0
     self.dead = false
 
@@ -12,6 +12,8 @@ function Player:new(area, x, y, opts)
 end
 
 function Player:update(dt)
+    self.X, self.Y = PlayerX, PlayerY
+
     Player.super.update(self, dt)
     if input:pressed('one') then resize(1) end
     if input:pressed('two') then resize(2) end

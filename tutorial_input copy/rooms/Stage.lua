@@ -10,11 +10,14 @@ end
 function Stage:init()
     camera:setFollowLerp(0.2)
     camera:setFollowLead(2) 
-    camera:setFollowStyle('TOPDOWN_TIGHT')
+    camera:setFollowStyle('LOCKON')
     resize(1)
-    input:bind('1', 'one')
-    input:bind('2', 'two')
-    input:bind('3', 'three')
+    input:bind('8', 'one')
+    input:bind('9', 'two')
+    input:bind('0', 'three')
+
+    input:bind('1', 'switch_left')
+    input:bind('2', 'switch_right')
 
     input:bind('w', 'up')
     input:bind('a', 'left')
