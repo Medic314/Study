@@ -5,8 +5,12 @@ function Player:new(area, x, y, opts)
     self.X = x
     self.Y = y
     self.A = 300
+    self.W, self.H = 76, 122
     self.DX, self.DY = 0, 0
     self.dead = false
+
+    self.collider = self.area.world:newRectangleCollider(self.X, self.Y, self.W, self.H)
+    self.collider:setObject(self)
 
     bullets = {}
 end
@@ -40,6 +44,7 @@ function Player:update(dt)
     end
 
     PlayerX, PlayerY = self.X, self.Y
+    self.collider:setPosition(self.X, self.Y)
 end
 
 function Player:draw()
@@ -47,5 +52,5 @@ function Player:draw()
             bullets[i]:draw()
     end
     local wiz = love.graphics.newImage("evil_wizard.png")
-    love.graphics.draw(wiz, self.X-38, self.Y-61, 0, 0.30, 0.30)
+    love.graphics.draw(wiz, self.X-self.W/2, self.Y-self.H/2, 0, 0.30, 0.30)
 end

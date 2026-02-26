@@ -8,8 +8,8 @@ function Stage:new()
 end
 
 function Stage:init()
-    camera:setFollowLerp(0.2)
-    camera:setFollowLead(2) 
+    camera:setFollowLerp(0.05)
+    camera:setFollowLead(7.5) 
     camera:setFollowStyle('LOCKON')
     resize(1)
     input:bind('8', 'one')

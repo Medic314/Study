@@ -11,9 +11,9 @@ function Gun:new(area, x, y, opts)
     self.area = area
     self.X = PlayerX + self.D
     self.Y = PlayerY
-    Charge = 0
-    ChargeRate = 1.125
-    MaxCharge = 20
+    self.chargenum = 0
+    self.chargerate = 1.125
+    self.maxcharge = 20
 
     self.rot = 0
 
@@ -25,31 +25,31 @@ function Gun:new(area, x, y, opts)
         area:addGameObject('Bullet', x, y, {rot=rot+random(-0.3, 0.3), l=l, type="flame"})
     end
 
-    function Gun:Charge_Bullet()
-        if Charge < 10 then
-            Charge = Charge + ChargeRate
+    local function charge_Bullet()
+        if self.chargenum < 10 then
+            self.chargenum = self.chargenum + self.chargerate
         else
-            Charge = Charge + ChargeRate/4
+            self.chargenum = self.chargenum + self.chargerate/4
             camera:shake(0.25, 0.5, 15)
         end
-        if Charge > MaxCharge then
-            Charge = MaxCharge
+        if self.chargenum > self.maxcharge then
+            self.chargenum = self.maxcharge
             camera:shake(0.75, 0.25, 20)
         end
 
-        print(Charge)
+        print(self.chargenum)
     end
 
-    function Gun:Charge_Bullet_Release(area, x, y, rot, l)
-        if Charge >= 10 then
-            area:addGameObject('Bullet', x, y, {rot=rot, l=l, type="charge", size=Charge/10})
+    local function charge_Bullet_Release(area, x, y, rot, l)
+        if self.chargenum >= 10 then
+            area:addGameObject('Bullet', x, y, {rot=rot, l=l, type="charge", size=self.chargenum/10, charge=self.chargenum})
         end
-        Charge = 0
+        self.chargenum = 0
     end
 
     self.basic = {interval=0.25, downfunc = function() Gun:Basic_Bullet(self.area, self.X, self.Y, self.rot, self.opts.l) end}
     self.flame = {interval=0.025, downfunc = function() Gun:Flame_Bullet(self.area, self.X, self.Y, self.rot, self.opts.l) end}
-    self.charge = {interval=0.1, downfunc = function() Gun:Charge_Bullet() end, releasefunc = function() Gun:Charge_Bullet_Release(self.area, self.X, self.Y, self.rot, self.opts.l) end}
+    self.charge = {interval=0.1, downfunc = function() charge_Bullet() end, releasefunc = function() charge_Bullet_Release(self.area, self.X, self.Y, self.rot, self.opts.l) end}
 
     self.lweapon = self.basic
     self.rweapon = self.charge

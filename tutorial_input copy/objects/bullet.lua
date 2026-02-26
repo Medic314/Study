@@ -9,6 +9,7 @@ function Bullet:new(area, x, y, opts)
     self.dead = false
 
     self.l = self.opts.l
+    self.charge = self.opts.charge
     self.r = self.opts.rot
     self.type = self.opts.type
 
@@ -28,8 +29,8 @@ function Bullet:new(area, x, y, opts)
         self.v = self.speed*300
         self.w = self.size*24
         self.culltime = 2.5
-        self.shake = 0.1*Charge
-        self.shaketime = 0.05*Charge
+        self.shake = 0.1*self.charge
+        self.shaketime = 0.05*self.charge
     elseif self.type == "flame" then
         self.v = self.speed*600
         self.w = self.size*12
@@ -44,8 +45,8 @@ function Bullet:new(area, x, y, opts)
 
     camera:shake(self.shake, self.shaketime, 15)
 
-    PlayerX = PlayerX + (-1*(self.v*math.cos(self.r)))/400
-    PlayerY = PlayerY + (-1*(self.v*math.sin(self.r)))/400
+    --PlayerX = PlayerX + (-1*(self.v*math.cos(self.r)))/400
+    --PlayerY = PlayerY + (-1*(self.v*math.sin(self.r)))/400
 end
 
 function Bullet:update(dt)
