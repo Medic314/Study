@@ -9,7 +9,9 @@ function Player:new(area, x, y, opts)
     self.DX, self.DY = 0, 0
     self.dead = false
 
-    self.collider = self.area.world:newRectangleCollider(self.X, self.Y, self.W, self.H)
+    self.collider = self.area.world:newRectangleCollider(self.X, self.Y, self.W/1.25, self.H/1.25)
+    self.collider:setCollisionClass('Player')
+    self.collider:setType('static')
     self.collider:setObject(self)
 
     bullets = {}

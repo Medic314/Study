@@ -12,5 +12,5 @@ end
 
 function Grid:draw()
     grid = love.graphics.newImage("grid.png")
-    love.graphics.draw(grid, self.x, self.y)
+    ---love.graphics.draw(grid, self.x, self.y)
 end

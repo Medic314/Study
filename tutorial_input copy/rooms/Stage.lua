@@ -1,6 +1,7 @@
 Stage = Object:extend()
 
 function Stage:new()
+    Debug_Vision = true
     self.area = Area(self)
     self.main_canvas = love.graphics.newCanvas(gw, gh)
     self.area:addPhysicsWorld()
@@ -15,9 +16,13 @@ function Stage:init()
     input:bind('8', 'one')
     input:bind('9', 'two')
     input:bind('0', 'three')
+    input:bind('6', function() Debug_Vision = true end)
+    input:bind('7', function() Debug_Vision = false end)
 
     input:bind('1', 'switch_left')
     input:bind('2', 'switch_right')
+
+    input:bind('e', 'increase_atkspd')
 
     input:bind('w', 'up')
     input:bind('a', 'left')
@@ -34,11 +39,17 @@ function Stage:init()
     PlayerX = 0
     PlayerY = 0
 
+    self.area.world:addCollisionClass('Player')
+    self.area.world:addCollisionClass('Enemy')
+    self.area.world:addCollisionClass('Friendly Bullet', {ignores = {'Player'}})
+
     self.area:addGameObject('Grid', -300, -300)
 
     self.area:addGameObject('Player', 0, 0)
     self.area:addGameObject('Gun', PlayerX, PlayerY, {l=true})
     self.area:addGameObject('Gun', PlayerX, PlayerY, {l=false})
+
+    self.area:addGameObject('Dummy', 0, 0)
 end
 
 
@@ -61,6 +72,7 @@ function Stage:draw()
     camera:attach(PlayerX, PlayerY, gw, gh)
 
     self.area:draw()
+    camera:draw()
 
     camera:detach()
     
