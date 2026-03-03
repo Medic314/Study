@@ -49,6 +49,25 @@ function Gun:new(area, x, y, opts)
         area:addGameObject('Bullet', x, y, {rot=rot+random(-0.3*accuracy, 0.3*accuracy), l=l, type="flame", attackspeed=self.attackspeed, shape='circle', speed=self.speed, dmg=self.dmg})
     end
 
+    local function Lightning_Bullet()
+        if self.chargenum < 5 then
+            self.chargenum = self.chargenum + self.chargerate
+        end
+        if self.chargenum >= 5 then
+            self.chargenum = 5
+            camera:shake(0.75, 0.25, 20)
+        end
+
+        print(self.chargenum)
+    end
+
+    local function Lightning_Bullet2(area, x, y, rot, l)
+        if self.chargenum >= 5 then
+            area:addGameObject('Bullet', x, y, {rot=rot, l=l, type="lightning", attackspeed=self.attackspeed, shape='circle', speed=self.speed, dmg=self.dmg})
+        end
+        self.chargenum = 0
+    end
+
     local function charge_Bullet()
         if self.chargenum < 10 then
             self.chargenum = self.chargenum + self.chargerate
@@ -74,6 +93,7 @@ function Gun:new(area, x, y, opts)
     self.basic = {interval=0.35, downfunc = function() Basic_Bullet(self.area, self.X, self.Y, self.rot, self.opts.l, self.accuracy) end, name = "basic"}
     self.flame = {interval=0.05, downfunc = function() Flame_Bullet(self.area, self.X, self.Y, self.rot, self.opts.l, self.accuracy) end, name = "flame"}
     self.water = {interval=0.5, downfunc = function() Water_Bullet(self.area, self.X, self.Y, self.rot, self.opts.l, self.accuracy) end, name = "water"}
+    self.lightning = {interval=0.2, downfunc = function() Lightning_Bullet() end, releasefunc = function() Lightning_Bullet2(self.area, self.X, self.Y, self.rot, self.opts.l) end, name = "lightning"}
     self.charge = {interval=0.1, downfunc = function() charge_Bullet() end, releasefunc = function() charge_Bullet_Release(self.area, self.X, self.Y, self.rot, self.opts.l) end, name = "charge"}
 
     self.lweapon = self.basic
@@ -104,7 +124,7 @@ function Gun:update(dt)
 
     if input:pressed('switch_left') then
         self.lcycle = self.lcycle + 1
-        if self.lcycle > 3 then self.lcycle = 0 end
+        if self.lcycle > 4 then self.lcycle = 0 end
         if self.lcycle == 0 then
             self.lweapon = self.basic
         end
@@ -117,10 +137,13 @@ function Gun:update(dt)
         if self.lcycle == 3 then
             self.lweapon = self.water
         end
+        if self.lcycle == 4 then
+            self.lweapon = self.lightning
+        end
     end
     if input:pressed('switch_right') then
         self.rcycle = self.rcycle + 1
-        if self.rcycle > 3 then self.rcycle = 0 end
+        if self.rcycle > 4 then self.rcycle = 0 end
         if self.rcycle == 0 then
             self.rweapon = self.basic
         end
@@ -132,6 +155,9 @@ function Gun:update(dt)
         end
         if self.rcycle == 3 then
             self.rweapon = self.water
+        end
+        if self.rcycle == 4 then
+            self.rweapon = self.lightning
         end
     end
 

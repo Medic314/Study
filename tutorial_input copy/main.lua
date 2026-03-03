@@ -48,7 +48,7 @@ function recursiveEnumerate(folder, file_list)
     for _, item in ipairs(items) do
         local file = folder .. '/' .. item
         if love.filesystem.getInfo(file) then
-            table.insert(file_list, file)
+            table.insert(file_list, file) 
         elseif love.filesystem.isDirectory(file) then
             recursiveEnumerate(file, file_list)
         end

@@ -22,6 +22,7 @@ function Bullet:new(area, x, y, opts)
     self.a = 100
     self.rv = 1.66*math.pi
     
+    
     if self.type == "basic" then
         self.damage = 1*self.dmg
 
@@ -51,9 +52,17 @@ function Bullet:new(area, x, y, opts)
 
         self.v = self.speed*600
         self.h = self.size*24
-        self.w = self.size*24*5
+        self.w = self.size*24*7
         self.culltime = 0.25
         self.shake = 0.125
+        self.shaketime = 0.1
+    elseif self.type == "lightning" then
+        self.damage = 3*self.dmg
+
+        self.v = self.speed*0
+        self.w = self.size*32
+        self.culltime = 1.25
+        self.shake = 0.2
         self.shaketime = 0.1
     end
 
@@ -66,6 +75,14 @@ function Bullet:new(area, x, y, opts)
         self.collider:setCollisionClass('Friendly Bullet')
         self.collider:setObject(self)
     end
+
+    if self.type == 'lightning' then
+        self.collider:setType('kinetic')
+        self.mx, self.my = love.mouse.getPosition()
+        self.x, self.y = camera:toWorldCoords(self.mx, self.my)
+        self.collider:setPosition(self.x, self.y)
+    end
+
     timer:after(self.culltime, function() self.dead = true end)
 
     camera:shake(self.shake*2, self.shaketime, 60)
@@ -75,7 +92,7 @@ function Bullet:new(area, x, y, opts)
 end
 
 function Bullet:update(dt)
-    if self.shape == 'circle' then
+    if self.type == 'basic' or self.type == 'charge' or self.type == 'flame' then
         local dx = self.x + self.v*math.cos(self.r)*dt
         local dy = self.y + self.v*math.sin(self.r)*dt
         self.x = dx
@@ -83,9 +100,15 @@ function Bullet:update(dt)
 
         self.collider:setPosition(self.x, self.y)
     end
+
     if self.collider:enter('Enemy') then
+        if self.type == 'water' then
+            timer:after(0.1, function() self.dead = true end)
+        end
+        if self.type == 'basic' or self.type == 'charge' or self.type == 'flame' then
             self.dead = true
-            LastDmg = self.damage
+        end
+        LastDmg = self.damage
     end
 end
 

@@ -18,7 +18,7 @@ function Dummy:update(dt)
 
     if self.collider:enter('Friendly Bullet') then
         print("Hit")
-        timer:after(0.0001, function() self.hp = self.hp + LastDmg end)
+        self.hp = self.hp + LastDmg
     end
 end
 

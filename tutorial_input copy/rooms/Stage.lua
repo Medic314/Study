@@ -50,6 +50,8 @@ function Stage:init()
     self.area:addGameObject('Gun', PlayerX, PlayerY, {l=false})
 
     self.area:addGameObject('Dummy', 0, 0)
+    self.area:addGameObject('Dummy', 100, 0)
+    self.area:addGameObject('Dummy', 200, 0)
 end
 
 
