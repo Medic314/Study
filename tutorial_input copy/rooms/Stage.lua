@@ -12,12 +12,13 @@ function Stage:init()
     camera:setFollowLerp(0.05)
     camera:setFollowLead(7.5) 
     camera:setFollowStyle('LOCKON')
-    resize(1)
     input:bind('8', 'one')
     input:bind('9', 'two')
     input:bind('0', 'three')
     input:bind('6', function() Debug_Vision = true end)
     input:bind('7', function() Debug_Vision = false end)
+    
+    input:bind('space', function() local MX, MY = camera:toWorldCoords(love.mouse.getPosition()) self.area:addGameObject('Enemy', MX, MY, {hp=math.floor(random(3, 12)), v=random(50,200)}) end)
 
     input:bind('1', 'switch_left')
     input:bind('2', 'switch_right')
@@ -41,7 +42,7 @@ function Stage:init()
 
     self.area.world:addCollisionClass('Player')
     self.area.world:addCollisionClass('Enemy')
-    self.area.world:addCollisionClass('Friendly Bullet', {ignores = {'Player'}})
+    self.area.world:addCollisionClass('Friendly Bullet', {ignores = {'Player', 'Enemy'}})
 
     self.area:addGameObject('Grid', -300, -300)
 
@@ -52,6 +53,8 @@ function Stage:init()
     self.area:addGameObject('Dummy', 0, 0)
     self.area:addGameObject('Dummy', 100, 0)
     self.area:addGameObject('Dummy', 200, 0)
+
+    self.area:addGameObject('Enemy', 200, 200, {hp=10})
 end
 
 

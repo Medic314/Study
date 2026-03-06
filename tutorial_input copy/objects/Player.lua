@@ -14,6 +14,9 @@ function Player:new(area, x, y, opts)
     self.collider:setType('static')
     self.collider:setObject(self)
 
+    self.buffer = false
+    self.hp = 6
+
     bullets = {}
 end
 
@@ -47,6 +50,19 @@ function Player:update(dt)
 
     PlayerX, PlayerY = self.X, self.Y
     self.collider:setPosition(self.X, self.Y)
+
+    if self.collider:enter('Enemy') then
+        print("DMG")
+        if self.buffer == false then
+            self.hp = self.hp - 1
+            self.buffer = true
+            timer:after(2, function() self.buffer = false end)
+        end
+    end
+
+    if self.hp <= 0 then
+        gotoRoom("Death")
+    end
 end
 
 function Player:draw()
@@ -55,4 +71,8 @@ function Player:draw()
     end
     local wiz = love.graphics.newImage("evil_wizard.png")
     love.graphics.draw(wiz, self.X-self.W/2, self.Y-self.H/2, 0, 0.30, 0.30)
+
+    self.printx, self.printy = camera:toCameraCoords(0,0)
+        love.graphics.print(self.hp, self.printx*-1, (self.printy-40)*-1)
+        love.graphics.print(string.format("Buffer: %s", tostring(self.buffer)), self.printx*-1, (self.printy-60)*-1)
 end
