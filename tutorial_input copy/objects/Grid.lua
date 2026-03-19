@@ -11,6 +11,6 @@ function Grid:update(dt)
 end
 
 function Grid:draw()
-    grid = love.graphics.newImage("grid.png")
+    --grid = love.graphics.newImage("assets/grid.png")
     ---love.graphics.draw(grid, self.x, self.y)
 end

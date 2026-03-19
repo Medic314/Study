@@ -37,7 +37,7 @@ end
 function resize(s)
     love.window.setMode(s*gw, s*gh)
     sx, sy = s, s
-end
+end 
 
 function gotoRoom(room_type, ...)
     current_room = _G[room_type](...)
@@ -49,11 +49,11 @@ function recursiveEnumerate(folder, file_list)
         local file = folder .. '/' .. item
         if love.filesystem.getInfo(file) then
             table.insert(file_list, file) 
-        elseif love.filesystem.isDirectory(file) then
+        elseif love.filesystem.isDirectory(file) then 
             recursiveEnumerate(file, file_list)
         end
     end
-end
+end 
 
 
 function requireFiles(files)

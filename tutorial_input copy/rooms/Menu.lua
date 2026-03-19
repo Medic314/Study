@@ -11,6 +11,9 @@ function Menu:init()
     resize(1)
     self.area:addGameObject('Button', 0, 0)
     input:bind('mouse1', 'left_click')
+
+    input:bind('6', function() gotoRoom('Menu') end)
+    input:bind('7', function() gotoRoom('Stage') end)
 end
 
 

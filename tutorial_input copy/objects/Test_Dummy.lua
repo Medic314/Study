@@ -16,10 +16,13 @@ end
 function Dummy:update(dt)
     self.collider:setPosition(self.X, self.Y)
 
-    if self.collider:enter('Friendly Bullet') then
-        print("Hit")
-        self.hp = self.hp + LastDmg
-    end
+    self.collider:setPreSolve(function(collider_1, collider_2, contact)        
+        if collider_1.collision_class == 'Enemy' and collider_2.collision_class == 'Friendly Bullet' then
+            contact:setEnabled(false)
+            print("Hit")
+            self.hp = self.hp + LastDmg
+        end    
+    end)
 end
 
 function Dummy:draw()
