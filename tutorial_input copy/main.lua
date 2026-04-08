@@ -29,7 +29,7 @@ function love.update(dt)
     if current_room then current_room:update(dt) end
 end
  
-function love.draw()
+function love.draw() 
     if current_room then current_room:draw() end
 end
 
@@ -46,14 +46,14 @@ end
 function recursiveEnumerate(folder, file_list)
     local items = love.filesystem.getDirectoryItems(folder)
     for _, item in ipairs(items) do
-        local file = folder .. '/' .. item
+        local file = folder .. '/' .. item 
         if love.filesystem.getInfo(file) then
-            table.insert(file_list, file) 
+            table.insert(file_list, file)
         elseif love.filesystem.isDirectory(file) then 
             recursiveEnumerate(file, file_list)
         end
     end
-end 
+end
 
 
 function requireFiles(files)

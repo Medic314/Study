@@ -23,7 +23,7 @@ function GameObject:draw()
 end
 
 function GameObject:destroy()
-    self.timer:clear()
+    self.timer:destroy()
     if self.collider then self.collider:destroy() end
     self.collider = nil
 end

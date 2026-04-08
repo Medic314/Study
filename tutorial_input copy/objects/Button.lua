@@ -2,6 +2,7 @@ Button = GameObject:extend()
 
 function Button:new(area, x, y, opts)
     Button.super.new(self, area, x, y, opts)
+    self.layer = 'ui'
     self.x = (gw/2)-(300/2)
     self.y = (gh/2)-(300/2)
 end

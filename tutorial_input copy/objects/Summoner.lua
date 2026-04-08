@@ -2,6 +2,8 @@ Summoner = GameObject:extend()
 
 function Summoner:new(area, x, y, opts)
     Summoner.super.new(self, area, x, y, opts)
+    self.layer = 'background'
+
     self.x = x
     self.y = y
     self.type = opts.type
@@ -19,6 +21,10 @@ function Summoner:new(area, x, y, opts)
         timer:after(1, function() self.area:addGameObject('Enemy', self.x, self.y, {hp=self.hp, v=self.v, type='gunner', speed=0.5, accuracy=2, size=1.5, attackspeed=2}) end)
     elseif self.type == 'shotgunner' then
         timer:after(1, function() self.area:addGameObject('Enemy', self.x, self.y, {hp=self.hp, v=self.v, type='shotgunner', speed=0.55, accuracy=5, size=1, attackspeed=3}) end)
+    elseif self.type == 'trenchcoat' then
+        timer:after(1, function() self.area:addGameObject('Enemy', self.x, self.y, {hp=self.hp, v=self.v, type='trenchcoat'}) end)
+    elseif self.type == 'sentry' then
+        timer:after(1, function() self.area:addGameObject('Enemy', self.x, self.y, {hp=self.hp, v=self.v, type='sentry'}) end)
     end
     timer:after(1, function() self.dead = true end)
 

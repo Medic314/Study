@@ -20,7 +20,31 @@ end
 
 function Area:draw()
     if self.world then if Debug_Vision == true then self.world:draw() end end
+    local ui, fore, main, back = {}, {}, {}, {}
     for _, game_object in ipairs(self.game_objects) do
+        if game_object.layer == 'ui' then
+            table.insert(ui, game_object)
+        end
+        if game_object.layer == 'foreground' then
+            table.insert(fore, game_object)
+        end
+        if game_object.layer == 'main layer' then
+            table.insert(main, game_object)
+        end
+        if game_object.layer == 'background' then
+            table.insert(back, game_object)
+        end
+    end
+    for _, game_object in ipairs(back) do
+        game_object:draw()
+    end
+    for _, game_object in ipairs(main) do
+        game_object:draw()
+    end
+    for _, game_object in ipairs(fore) do
+        game_object:draw()
+    end
+    for _, game_object in ipairs(ui) do
         game_object:draw()
     end
 end
