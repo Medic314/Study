@@ -4,6 +4,7 @@ function Mouse:new(area, x, y, opts)
     Mouse.super.new(self, area, x, y, opts)
     self.x = x
     self.y = y
+    self.layer = 'menu'
 
     self.collider = self.area.world:newCircleCollider(self.x, self.y, 2)
     self.collider:setCollisionClass("Mouse")

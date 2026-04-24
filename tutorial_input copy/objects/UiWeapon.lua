@@ -69,19 +69,22 @@ function UiWeapon:update(dt)
 
 
     local imgW, imgH = self.image:getDimensions()
-    self.printx, self.printy = camera:toCameraCoords(0,0)
     self.IW = imgW
     self.IH = imgH
+    self.printx, self.printy = camera:toCameraCoords(0,0)
     self.x, self.y = ((self.printx-gw))*-1, ((self.printy-gh))*-1
+    
     if self.drop then
         self.colliders = self.area.world:queryRectangleArea(self.x-self.IW*1.1, self.y-(self.IH/3)-20, self.IW, self.IH, {'Mouse'})
     else
         self.colliders = self.area.world:queryRectangleArea(self.x-self.IW*1.1, self.y-(self.IH), self.IW, self.IH, {'Mouse'})
     end
-    if self.colliders[1] then
-        UiHover = true
-    else
-        UiHover = false
+    if not movelock then
+        if self.colliders[1] then
+            UiHover = true
+        else
+            UiHover = false
+        end
     end
     if UiHover then
         if self.drop then
@@ -92,80 +95,68 @@ function UiWeapon:update(dt)
             self.colliderbuttonr = self.area.world:queryRectangleArea((self.x-self.IW*1.1)+180, (self.y-(self.IH))+40, 100, 100, {'Mouse'})
 
             if self.tab == 1 then
-                if lupgrade == 1 then
-                    self.colliderbuttonul1 = self.area.world:queryRectangleArea((self.x-self.IW*1.1)+10, (self.y-(self.IH))+185, 135, 100, {'Mouse'})
-                    self.colliderbuttonur1 = self.area.world:queryRectangleArea((self.x-self.IW*1.1)+153, (self.y-(self.IH))+185, 135, 100, {'Mouse'})
-                end
-                if lupgrade == 2 then
-                    self.colliderbuttonul2 = self.area.world:queryRectangleArea((self.x-self.IW*1.1)+10, (self.y-(self.IH))+295, 135, 100, {'Mouse'})
-                end
-                if lupgrade == 4 then
-                    self.colliderbuttonur2 = self.area.world:queryRectangleArea((self.x-self.IW*1.1)+153, (self.y-(self.IH))+295, 135, 100, {'Mouse'})
-                end
-                if self.colliderbuttonul1 then
-                    if self.colliderbuttonul1[1] then
-                        if input:pressed('left_click') then
-                            lupgrade = 2
-                        end
-                    end
-                end
-                if self.colliderbuttonul2 then
-                    if self.colliderbuttonul2[1] then
-                        if input:pressed('left_click') then
-                            lupgrade = 3
-                        end
-                    end
-                end
-                if self.colliderbuttonur1 then
-                    if self.colliderbuttonur1[1] then
-                        if input:pressed('left_click') then
-                            lupgrade = 4
-                        end
-                    end
-                end
-                if self.colliderbuttonur2 then
-                    if self.colliderbuttonur2[1] then
-                        if input:pressed('left_click') then
-                            lupgrade = 5
+                if input:pressed('left_click') then
+                    if upgrade_points > 0 then
+                        if lupgrade == 1 then
+                            self.colliderbuttonul1 = self.area.world:queryRectangleArea((self.x-self.IW*1.1)+10, (self.y-(self.IH))+185, 135, 100, {'Mouse'})
+                            self.colliderbuttonur1 = self.area.world:queryRectangleArea((self.x-self.IW*1.1)+153, (self.y-(self.IH))+185, 135, 100, {'Mouse'})
+                            if self.colliderbuttonul1[1] then
+                                lupgrade = 2
+                                print('up1')
+                                upgrade_points = upgrade_points - 1
+                            end
+                            if self.colliderbuttonur1[1] then
+                                lupgrade = 4
+                                print('up3')
+                                upgrade_points = upgrade_points - 1
+                            end
+                        elseif lupgrade == 2 then
+                            self.colliderbuttonul2 = self.area.world:queryRectangleArea((self.x-self.IW*1.1)+10, (self.y-(self.IH))+295, 135, 100, {'Mouse'})
+                            if self.colliderbuttonul2[1] then
+                                lupgrade = 3
+                                print('up2')
+                                upgrade_points = upgrade_points - 1
+                            end
+                        elseif lupgrade == 4 then
+                            self.colliderbuttonur2 = self.area.world:queryRectangleArea((self.x-self.IW*1.1)+153, (self.y-(self.IH))+295, 135, 100, {'Mouse'})
+                            if self.colliderbuttonur2[1] then
+                                lupgrade = 5
+                                print('up4')
+                                upgrade_points = upgrade_points - 1
+                            end
                         end
                     end
                 end
             else
-                if rupgrade == 1 then
-                    self.colliderbuttonul1 = self.area.world:queryRectangleArea((self.x-self.IW*1.1)+10, (self.y-(self.IH))+185, 135, 100, {'Mouse'})
-                    self.colliderbuttonur1 = self.area.world:queryRectangleArea((self.x-self.IW*1.1)+153, (self.y-(self.IH))+185, 135, 100, {'Mouse'})
-                end
-                if rupgrade == 2 then
-                    self.colliderbuttonul2 = self.area.world:queryRectangleArea((self.x-self.IW*1.1)+10, (self.y-(self.IH))+295, 135, 100, {'Mouse'})
-                end
-                if rupgrade == 4 then
-                    self.colliderbuttonur2 = self.area.world:queryRectangleArea((self.x-self.IW*1.1)+153, (self.y-(self.IH))+295, 135, 100, {'Mouse'})
-                end
-                if self.colliderbuttonul1 then
-                    if self.colliderbuttonul1[1] then
-                        if input:pressed('left_click') then
-                            rupgrade = 2
-                        end
-                    end
-                end
-                if self.colliderbuttonul2 then
-                    if self.colliderbuttonul2[1] then
-                        if input:pressed('left_click') then
-                            rupgrade = 3
-                        end
-                    end
-                end
-                if self.colliderbuttonur1 then
-                    if self.colliderbuttonur1[1] then
-                        if input:pressed('left_click') then
-                            rupgrade = 4
-                        end
-                    end
-                end
-                if self.colliderbuttonur2 then
-                    if self.colliderbuttonur2[1] then
-                        if input:pressed('left_click') then
-                            rupgrade = 5
+                if input:pressed('left_click') then
+                    if upgrade_points > 0 then
+                        if rupgrade == 1 then
+                            self.colliderbuttonul1 = self.area.world:queryRectangleArea((self.x-self.IW*1.1)+10, (self.y-(self.IH))+185, 135, 100, {'Mouse'})
+                            self.colliderbuttonur1 = self.area.world:queryRectangleArea((self.x-self.IW*1.1)+153, (self.y-(self.IH))+185, 135, 100, {'Mouse'})
+                            if self.colliderbuttonul1[1] then
+                                rupgrade = 2
+                                print('up1')
+                                upgrade_points = upgrade_points - 1
+                            end
+                            if self.colliderbuttonur1[1] then
+                                rupgrade = 4
+                                print('up3')
+                                upgrade_points = upgrade_points - 1
+                            end
+                        elseif rupgrade == 2 then
+                            self.colliderbuttonul2 = self.area.world:queryRectangleArea((self.x-self.IW*1.1)+10, (self.y-(self.IH))+295, 135, 100, {'Mouse'})
+                            if self.colliderbuttonul2[1] then
+                                rupgrade = 3
+                                print('up2')
+                                upgrade_points = upgrade_points - 1
+                            end
+                        elseif rupgrade == 4 then
+                            self.colliderbuttonur2 = self.area.world:queryRectangleArea((self.x-self.IW*1.1)+153, (self.y-(self.IH))+295, 135, 100, {'Mouse'})
+                            if self.colliderbuttonur2[1] then
+                                rupgrade = 5
+                                print('up4')
+                                upgrade_points = upgrade_points - 1
+                            end
                         end
                     end
                 end
@@ -212,6 +203,9 @@ function UiWeapon:update(dt)
 end
 
 function UiWeapon:draw()
+    self.printx, self.printy = camera:toCameraCoords(0,0)
+    self.x, self.y = ((self.printx-gw))*-1, ((self.printy-gh))*-1
+
     if self.drop then
         love.graphics.draw(self.image, self.x-self.IW*1.1, self.y-(self.IH/self.drawpos.m)-20, 0, 1, 1)
         love.graphics.draw(self.weaponlist, self.quads[self.frame], (self.x-self.IW*1.1)+30, (self.y-(self.IH/3)-20)+40, 0, 1.5, 1.5)
@@ -220,5 +214,9 @@ function UiWeapon:draw()
         love.graphics.draw(self.image, self.x-self.IW*1.1, self.y-(self.IH/self.drawpos.m), 0, 1, 1)
         love.graphics.draw(self.weaponlist, self.quads[self.frame], (self.x-self.IW*1.1)+30, (self.y-(self.IH))+40, 0, 1.5, 1.5)
         love.graphics.draw(self.weaponlist, self.quads[self.frame2], (self.x-self.IW*1.1)+180, (self.y-(self.IH))+40, 0, 1.5, 1.5)
+
+        love.graphics.rectangle('line', (self.x-self.IW*1.1)+10, (self.y-(self.IH))+185, 135, 100)
+        love.graphics.rectangle('line', (self.x-self.IW*1.1)+153, (self.y-(self.IH))+185, 135, 100)
     end
+    love.graphics.print(upgrade_points, (self.x-self.IW*1.1)+30+100, (self.y-(self.IH/3)-20))
 end

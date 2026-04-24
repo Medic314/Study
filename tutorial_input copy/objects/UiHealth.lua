@@ -25,8 +25,9 @@ function UiHealth:new(area, x, y, opts)
 end
 
 function UiHealth:update(dt)
-    self.printx, self.printy = camera:toCameraCoords(-10, -10)
-    self.printx, self.printy = self.printx*-1, self.printy*-1
+    self.printx, self.printy = camera:toCameraCoords(0,0)
+    self.x, self.y = ((self.printx-gw/2))*-1, ((self.printy-gh/2))*-1
+    self.x, self.y = self.x-gw/2, self.y-gh/2
     for i=1, math.ceil(playerMaxHP/2) do
         self.healthticks[i] = 1
     end
@@ -51,8 +52,12 @@ function UiHealth:update(dt)
 end
 
 function UiHealth:draw()
+    self.printx, self.printy = camera:toCameraCoords(0,0)
+    self.x, self.y = ((self.printx-gw/2))*-1, ((self.printy-gh/2))*-1
+    self.x, self.y = self.x-gw/2, self.y-gh/2
+
     for i=1, #self.healthticks do 
         self.frame = self.healthticks[i]
-        love.graphics.draw(self.image, self.quads[self.frame], self.printx+((i-1)*90), self.printy, 0, 1.5, 1.5)
+        love.graphics.draw(self.image, self.quads[self.frame], self.x+15+((i-1)*90), self.y+15, 0, 1.5, 1.5)
     end
 end

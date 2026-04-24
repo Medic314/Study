@@ -20,15 +20,15 @@ function Wall:new(area, x, y, opts)
     end
 
     if self.tileskin == "tile" then
-        self.image = love.graphics.newImage("assets/tiledev.png")
+        self.image = ST["TilePlaceholder"]
     elseif self.tileskin == "shelf" then
-        self.image = love.graphics.newImage("assets/shelfdev.png")
+        self.image = ST['Shelf']
     elseif self.tileskin == "shelf1" then
-        self.image = love.graphics.newImage("assets/shelfdev.png")
+        self.image = ST['Shelf']
     elseif self.tileskin == "shelf2" then
-        self.image = love.graphics.newImage("assets/shelfverdev.png")
+        self.image = ST['Shelf2']
     elseif self.tileskin == "tilebg" then
-        self.image = love.graphics.newImage("assets/bgdev.png")
+        self.image = ST['BackgroundTile']
     end
 end
 

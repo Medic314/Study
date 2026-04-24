@@ -18,7 +18,7 @@ function Debris:new(area, x, y, opts)
     timer:tween(self.culltime, self.speed, {speed = 0}, 'in-expo')
     timer:after(self.culltime, function() self.dead = true end)
 
-    self.image = love.graphics.newImage("assets/debrisdev.png")
+    self.image = ST['Debris']
     self.frame = 1
     self.max_frames = 3
     self.quads = {}

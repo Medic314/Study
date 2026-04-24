@@ -8,6 +8,7 @@ Physics = require("libraries.windfield")
 function love.load()
     love.graphics.setDefaultFilter('nearest', 'nearest')
     love.graphics.setLineStyle('rough')
+    math.randomseed(os.time())
 
     local room_files = {}
     recursiveEnumerate('rooms', room_files)
@@ -21,19 +22,21 @@ function love.load()
     input = Input()
     camera = Camera()
 
+    paused = false
+
     current_room = nil
     gotoRoom('Menu')
+    resize(1)
 end
 
 function love.update(dt)
     if current_room then current_room:update(dt) end
 end
- 
+
 function love.draw() 
     if current_room then current_room:draw() end
 end
 
- 
 function resize(s)
     love.window.setMode(s*gw, s*gh)
     sx, sy = s, s

@@ -3,7 +3,7 @@ Gun = GameObject:extend()
 function Gun:new(area, x, y, opts)
     Gun.super.new(self, area, x, y, opts)
     self.layer = 'main layer'
-    self.image = love.graphics.newImage("assets/R.png")
+    self.image = ST['Arrow']
 
     self.opts = opts
 
@@ -15,11 +15,11 @@ function Gun:new(area, x, y, opts)
     self.Y = PlayerY
     self.upgrade = 1
 
-    self.attackspeed = playerAttackspeed
-    self.accuracy = playerAccuracy
-    self.speed = playerBulletSpeed
-    self.size = playerBulletSize
-    self.dmg = playerDamage
+    self.attackspeed = playerAttackspeed * TomeBuffs.Attackspeed
+    self.accuracy = playerAccuracy * TomeBuffs.Accuracy
+    self.speed = playerBulletSpeed * TomeBuffs.BulletSpeed
+    self.size = playerBulletSize * TomeBuffs.BulletSize
+    self.dmg = playerDamage * TomeBuffs.Damage
     self.notfiring = true
 
     self.chargenum = 0
@@ -30,7 +30,7 @@ function Gun:new(area, x, y, opts)
     self.breload = false
     self.fammomax = 64
     self.fammo = 64
-    timer:every(0.5, function() if self.notfiring == true then self.fammo = self.fammo + 6  if self.fammo > self.fammomax then self.fammo = self.fammomax end end end)
+    timer:every(0.5/self.attackspeed, function() if self.notfiring == true then self.fammo = self.fammo + 6  if self.fammo > self.fammomax then self.fammo = self.fammomax end end end)
 
     self.buffer = false
 
@@ -38,7 +38,7 @@ function Gun:new(area, x, y, opts)
 
     local function Basic_Bullet(dmgmod, homing, strength)
         if self.bammo > 0 then
-            area:addGameObject('Bullet', self.X, self.Y, {rot=self.rot+random(-0.1*self.accuracy, 0.1*self.accuracy), l=self.l, type="basic", upgrade = self.upgrade, attackspeed=self.attackspeed, shape='circle', speed=self.speed,
+            area:addGameObject('Bullet', self.X, self.Y, {rot=self.rot+random(-0.15/self.accuracy, 0.15/self.accuracy), l=self.l, size = self.size, type="basic", upgrade = self.upgrade, attackspeed=self.attackspeed, shape='circle', speed=self.speed,
             dmg=self.dmg+dmgmod, homing=homing, homingstrength=strength})
             self.bammo = self.bammo - 1
         else
@@ -46,7 +46,7 @@ function Gun:new(area, x, y, opts)
                 if self.breload == false then
                     self.buffer = true
                     self.breload = true
-                    timer:after((0.35*self.attackspeed)*3, function() self.bammo = 12 self.breload = false end)
+                    timer:after((0.35/self.attackspeed)*3, function() self.bammo = 12 self.breload = false end)
                     self.buffer = false
                 end
             end
@@ -54,12 +54,12 @@ function Gun:new(area, x, y, opts)
     end
 
     local function Water_Bullet(dmgmod, accuracy, range, interval)
-        area:addGameObject('Bullet', self.X, self.Y, {rot=self.rot+random((accuracy*-1)*self.accuracy, accuracy*self.accuracy), l=self.l, type="water", upgrade = self.upgrade, attackspeed=self.attackspeed, shape='line', speed=self.speed, dmg=self.dmg+dmgmod, range=range, interval=interval})
+        area:addGameObject('Bullet', self.X, self.Y, {rot=self.rot+random((accuracy*-1)/self.accuracy, accuracy/self.accuracy), l=self.l, size = self.size, type="water", upgrade = self.upgrade, attackspeed=self.attackspeed, shape='line', speed=self.speed, dmg=self.dmg+dmgmod, range=range, interval=interval})
     end
 
     local function Flame_Bullet(dmgmod, accuracy)
         if self.fammo > 0 then
-            area:addGameObject('Bullet', self.X, self.Y, {rot=self.rot+random((accuracy*-1)*self.accuracy, accuracy*self.accuracy), l=self.l, type="flame", upgrade = self.upgrade, attackspeed=self.attackspeed, shape='circle', speed=self.speed, dmg=self.dmg+dmgmod})
+            area:addGameObject('Bullet', self.X, self.Y, {rot=self.rot+random((accuracy*-1)/self.accuracy, accuracy/self.accuracy), size = self.size, l=self.l, type="flame", upgrade = self.upgrade, attackspeed=self.attackspeed, shape='circle', speed=self.speed, dmg=self.dmg+dmgmod})
             self.fammo = self.fammo - 1
         else
             self.notfiring = true
@@ -79,13 +79,13 @@ function Gun:new(area, x, y, opts)
 
     local function Lightning_Bullet_release(homing, smites, aoe)
         if self.chargenum >= 5 then
-            area:addGameObject('Bullet', self.X, self.Y, {rot=self.rot, l=self.l, type="lightning", upgrade = self.upgrade, attackspeed=self.attackspeed, shape='ghost', speed=self.speed, dmg=self.dmg, homing=homing, homingstrength=10, smites=smites, aoe=aoe})
+            area:addGameObject('Bullet', self.X, self.Y, {rot=self.rot, l=self.l, type="lightning", upgrade = self.upgrade, attackspeed=self.attackspeed, size = self.size, shape='ghost', speed=self.speed, dmg=self.dmg, homing=homing, homingstrength=10, smites=smites, aoe=aoe})
         end
         self.chargenum = 0
     end
 
     local function Plant_Bullet(dmgmod)
-        area:addGameObject('Bullet', self.X, self.Y, {rot=self.rot, l=self.l, type="plant", upgrade = self.upgrade, attackspeed=self.attackspeed, shape='ghost', speed=self.speed, dmg=self.dmg+dmgmod})
+        area:addGameObject('Bullet', self.X, self.Y, {rot=self.rot, l=self.l, type="plant", upgrade = self.upgrade, attackspeed=self.attackspeed, size = self.size, shape='ghost', speed=self.speed, dmg=self.dmg+dmgmod})
     end
 
     local function Wall_Bullet(size, hp)
@@ -110,7 +110,7 @@ function Gun:new(area, x, y, opts)
 
     local function charge_Bullet_Release(dmgmod)
         if self.chargenum >= 10 then
-            area:addGameObject('Bullet', self.X, self.Y, {rot=self.rot, l=self.l, type="charge", upgrade = self.upgrade, size=self.chargenum/10, charge=self.chargenum, attackspeed=self.attackspeed, shape='circle', dmg=self.dmg+dmgmod})
+            area:addGameObject('Bullet', self.X, self.Y, {rot=self.rot, l=self.l, type="charge", upgrade = self.upgrade, size=self.chargenum/10, charge=self.chargenum, size = self.size, attackspeed=self.attackspeed, shape='circle', dmg=self.dmg+dmgmod})
         end
         self.chargenum = 0
     end
@@ -123,8 +123,8 @@ function Gun:new(area, x, y, opts)
     self.flame2 = {interval=0.05, downfunc = function() Flame_Bullet(0.25, 0.25) end, name = "WeaponFlame2", family = 'basic'}
 
     self.charge = {interval=0.1, downfunc = function() charge_Bullet(0) end, releasefunc = function() charge_Bullet_Release(0) end, name = "WeaponCharge", family = 'charge'}
-    self.charge1 = {interval=0.1, downfunc = function() charge_Bullet(0) end, releasefunc = function() charge_Bullet_Release(0.5) end, name = "WeaponCharge1", family = 'charge'}
-    self.charge2 = {interval=0.1, downfunc = function() charge_Bullet(0.75) end, releasefunc = function() charge_Bullet_Release(0) end, name = "WeaponCharge2", family = 'charge'}
+    self.charge1 = {interval=0.1, downfunc = function() charge_Bullet(0) end, releasefunc = function() charge_Bullet_Release(0.5) end, name = "WeaponCharge2", family = 'charge'}
+    self.charge2 = {interval=0.1, downfunc = function() charge_Bullet(0.75) end, releasefunc = function() charge_Bullet_Release(0) end, name = "WeaponCharge3", family = 'charge'}
     
     self.water = {interval=0.5, downfunc = function() Water_Bullet(0, 0.05, 1, self.water.interval) end, name = "WeaponWater", family = 'water'}
     self.water1 = {interval=0.35, downfunc = function() Water_Bullet(0, 0.1, -1, self.water1.interval) end, name = "WeaponWater2", family = 'water'}
@@ -153,12 +153,11 @@ function Gun:new(area, x, y, opts)
 end
 
 function Gun:update(dt)
-    self.attackspeed = playerAttackspeed
-    self.accuracy = playerAccuracy
-    self.speed = playerBulletSpeed
-    self.size = playerBulletSize
-    self.dmg = playerDamage
-
+    self.attackspeed = playerAttackspeed * TomeBuffs.Attackspeed
+    self.accuracy = playerAccuracy * TomeBuffs.Accuracy
+    self.speed = playerBulletSpeed * TomeBuffs.BulletSpeed
+    self.size = playerBulletSize * TomeBuffs.BulletSize
+    self.dmg = playerDamage * TomeBuffs.Damage
 
 
     self.X, self.Y = PlayerX+self.D, PlayerY
@@ -191,10 +190,10 @@ function Gun:update(dt)
         rweapon = self.rweapon
     end
 
-    if input:pressed('switch_left') then
+    --[[if input:pressed('switch_left') then
         self.lcycle = self.lcycle + 1
         if self.lcycle > 4 then self.lcycle = 0 end
-    end
+    end]]--
     if self.lcycle == 0 then
         if self.upgrade == 1 then
             self.lweapon = self.basic
@@ -252,10 +251,10 @@ function Gun:update(dt)
             self.lweapon = self.wall2
         end
     end
-    if input:pressed('switch_right') then
+    --[[if input:pressed('switch_right') then
         self.rcycle = self.rcycle + 1
         if self.rcycle > 4 then self.rcycle = 0 end
-    end
+    end]]--
     if self.rcycle == 0 then
         if self.upgrade == 1 then
             self.rweapon = self.basic
@@ -321,14 +320,16 @@ function Gun:update(dt)
                     self.lweapon.downfunc()
                     self.buffer = true
                     self.notfiring = false
-                    timer:after(self.lweapon.interval*self.attackspeed, function() self.buffer = false end)
+                    timer:after(self.lweapon.interval/self.attackspeed, function() self.buffer = false end)
                 end
             end
             
-            if input:down('left_click', self.lweapon.interval*self.attackspeed) then
+            if input:down('left_click', self.lweapon.interval/self.attackspeed) then
                 if self.buffer == false then
-                self.lweapon.downfunc()
-                self.notfiring = false
+                    self.buffer = true
+                    self.lweapon.downfunc()
+                    self.notfiring = false
+                    timer:after((self.lweapon.interval/self.attackspeed)*0.9, function() self.buffer = false end)
                 end
             end
             if input:released('left_click') then
@@ -345,13 +346,15 @@ function Gun:update(dt)
                     self.rweapon.downfunc()
                     self.notfiring = false
                     self.buffer = true
-                    timer:after(self.rweapon.interval*self.attackspeed, function() self.buffer = false end)
+                    timer:after(self.rweapon.interval/self.attackspeed, function() self.buffer = false end)
                 end
             end
-            if input:down('right_click', self.rweapon.interval*self.attackspeed) then
+            if input:down('right_click', self.rweapon.interval/self.attackspeed) then
                 if self.buffer == false then
+                    self.buffer = true
                     self.rweapon.downfunc()
                     self.notfiring = false
+                    timer:after((self.rweapon.interval/self.attackspeed)*0.9, function() self.buffer = false end)
                 end
             end
             if input:released('right_click') then
@@ -375,8 +378,8 @@ function Gun:draw()
             if self.breload == true then
                 if self.t == true then
                     self.t1, self.t2 = {m = -20}, {m = -20}
-                    timer:tween((0.35*self.attackspeed)*3, self.t1, {m = 20}, 'out-sine')
-                    timer:tween((0.35*self.attackspeed)*3, self.t2, {m = 20}, 'out-sine')
+                    timer:tween((0.35/self.attackspeed)*3, self.t1, {m = 20}, 'out-sine')
+                    timer:tween((0.35/self.attackspeed)*3, self.t2, {m = 20}, 'out-sine')
                 end
                 self.t = false
                 love.graphics.line(PlayerX-50, PlayerY-self.t1.m, PlayerX-70, PlayerY-self.t2.m)
@@ -414,8 +417,8 @@ function Gun:draw()
             if self.breload == true then
                 if self.t == true then
                     self.t1, self.t2 = {m = -20}, {m = -20}
-                    timer:tween((0.35*self.attackspeed)*3, self.t1, {m = 20}, 'out-sine')
-                    timer:tween((0.35*self.attackspeed)*3, self.t2, {m = 20}, 'out-sine')
+                    timer:tween((0.35/self.attackspeed)*3, self.t1, {m = 20}, 'out-sine')
+                    timer:tween((0.35/self.attackspeed)*3, self.t2, {m = 20}, 'out-sine')
                 end
                 self.t = false
                 love.graphics.line(PlayerX+50, PlayerY-self.t1.m, PlayerX+70, PlayerY-self.t2.m)
@@ -444,10 +447,10 @@ function Gun:draw()
         end
     end
     if self.l then
-        love.graphics.print(self.lweapon.name, self.printx*-1, self.printy*-1)
-        love.graphics.print(self.upgrade, self.printx*-1, (self.printy-80)*-1)
+        --love.graphics.print(self.lweapon.name, self.printx*-1, self.printy*-1)
+        --love.graphics.print(self.upgrade, self.printx*-1, (self.printy-80)*-1)
     else
-        love.graphics.print(self.rweapon.name, self.printx*-1, (self.printy-20)*-1)
-        love.graphics.print(self.upgrade, self.printx*-1, (self.printy-100)*-1)
+        --love.graphics.print(self.rweapon.name, self.printx*-1, (self.printy-20)*-1)
+        --love.graphics.print(self.upgrade, self.printx*-1, (self.printy-100)*-1)
     end
 end

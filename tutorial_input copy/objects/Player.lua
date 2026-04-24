@@ -5,8 +5,8 @@ function Player:new(area, x, y, opts)
     self.layer = 'main layer'
     self.X = x
     self.Y = y
-    self.A = 300
-    self.scale = 1.25
+    self.A = 300*playerSpeed
+    self.scale = 1.25*playerScale
     self.W, self.H = 76/1.25, 122/1.25
     self.W, self.H = self.W/self.scale, self.H/self.scale
     self.IW, self.IH = 76/self.scale, 122/self.scale
@@ -23,6 +23,16 @@ function Player:new(area, x, y, opts)
 end
 
 function Player:update(dt)
+    if invincible then
+        self.buffer = true
+    end
+    self.A = 300*(playerSpeed*TomeBuffs.Speed)
+
+    self.scale = 1.25*(playerScale*TomeBuffs.scale)
+    self.W, self.H = 76/1.25, 122/1.25
+    self.W, self.H = self.W/self.scale, self.H/self.scale
+    self.IW, self.IH = 76/self.scale, 122/self.scale
+
     playerHP = self.hp
     playerMaxHP = self.maxhp
     self.X, self.Y = PlayerX, PlayerY
@@ -34,11 +44,12 @@ function Player:update(dt)
 
     self.LX, self.LY = self.X, self.Y
 
-    if input:down('up') then self.Y = self.Y - self.A*dt self.colliders = self.area.world:queryRectangleArea(self.X-((self.W)/2), self.Y-((self.H)/2), self.W, self.H, {'Terrain', 'TerrainP'}) if self.colliders[1] then self.Y = self.Y + self.A*dt end end
-    if input:down('left') then self.X = self.X - self.A*dt self.colliders = self.area.world:queryRectangleArea(self.X-((self.W)/2), self.Y-((self.H)/2), self.W, self.H, {'Terrain', 'TerrainP'}) if self.colliders[1] then self.X = self.X + self.A*dt end end
-    if input:down('down') then self.Y = self.Y + self.A*dt self.colliders = self.area.world:queryRectangleArea(self.X-((self.W)/2), self.Y-((self.H)/2), self.W, self.H, {'Terrain', 'TerrainP'}) if self.colliders[1] then self.Y = self.Y - self.A*dt end end
-    if input:down('right') then self.X = self.X + self.A*dt self.colliders = self.area.world:queryRectangleArea(self.X-((self.W)/2), self.Y-((self.H)/2), self.W, self.H, {'Terrain', 'TerrainP'}) if self.colliders[1] then self.X = self.X - self.A*dt end end
-
+    if not movelock then
+        if input:down('up') then self.Y = self.Y - self.A*dt self.colliders = self.area.world:queryRectangleArea(self.X-((self.W)/2), self.Y-((self.H)/2), self.W, self.H, {'Terrain', 'TerrainP'}) if self.colliders[1] then self.Y = self.Y + self.A*dt end end
+        if input:down('left') then self.X = self.X - self.A*dt self.colliders = self.area.world:queryRectangleArea(self.X-((self.W)/2), self.Y-((self.H)/2), self.W, self.H, {'Terrain', 'TerrainP'}) if self.colliders[1] then self.X = self.X + self.A*dt end end
+        if input:down('down') then self.Y = self.Y + self.A*dt self.colliders = self.area.world:queryRectangleArea(self.X-((self.W)/2), self.Y-((self.H)/2), self.W, self.H, {'Terrain', 'TerrainP'}) if self.colliders[1] then self.Y = self.Y - self.A*dt end end
+        if input:down('right') then self.X = self.X + self.A*dt self.colliders = self.area.world:queryRectangleArea(self.X-((self.W)/2), self.Y-((self.H)/2), self.W, self.H, {'Terrain', 'TerrainP'}) if self.colliders[1] then self.X = self.X - self.A*dt end end
+    end
     self.DfX, self.DfY = self.X - self.LX, self.Y - self.LY
 
     if not input:down('directional_input') then
@@ -54,34 +65,63 @@ function Player:update(dt)
 
     self.icolliders = self.area.world:queryCircleArea(self.X, self.Y, self.W*3, {'Item'})
     if self.icolliders[1] then
-        if input:pressed('interactl') then
-            if IT[self.icolliders[1].type].family == 'weapon' then
-                print('l')
-                local lweaponname = lweapon.name
-                --if not rweapon.family == self.icolliders[1].wfamily then
-                    timer:after(0.1, function() self.area:addGameObject('Item', self.X, self.Y, {type= lweaponname}) end)
-                    lcycle = IT[self.icolliders[1].type].func()[1]
-                    lupgrade = IT[self.icolliders[1].type].func()[2]
-                    self.icolliders[1].dead = true
-                --end
-            else
-                IT[self.icolliders[1].type].func()
-                self.icolliders[1].dead = true
-            end
-        end
         if input:pressed('interactr') then
             if IT[self.icolliders[1].type].family == 'weapon' then
-                print('r')
-                local rweaponname = rweapon.name
-                --if not lweapon.family == self.icolliders[1].wfamily then
-                    timer:after(0.1, function() self.area:addGameObject('Item', self.X, self.Y, {type= rweaponname}) end)
-                    rcycle = IT[self.icolliders[1].type].func()[1]
-                    rupgrade = IT[self.icolliders[1].type].func()[2]
+                if not weaponmenu then 
+                    weaponmenu = true 
+
+                    local rweaponname = rweapon.name
+                    local lweaponname = lweapon.name
+                    print(self.icolliders[1].wfamily, lweaponname, rweaponname)
+                    self.lock = false
+                    if lweapon.family == self.icolliders[1].wfamily then
+                        self.lock = 'r'
+                    end
+                    if rweapon.family == self.icolliders[1].wfamily then
+                        self.lock = 'l'
+                    end
+                    local itemc = self.icolliders[1].type
+                    local function func1()
+                    self.area:addGameObject('Item', self.X, self.Y, {type= lweaponname})
+                    lcycle = IT[itemc].func()[1]
+                    lupgrade = IT[itemc].func()[2] end
+
+                    local function func2()
+                    self.area:addGameObject('Item', self.X, self.Y, {type= rweaponname})
+                    rcycle = IT[itemc].func()[1]
+                    rupgrade = IT[itemc].func()[2] end
+                        
+                    self.area:addGameObject('Weaponmenu', 0, 0, {func1 = func1, func2 = func2, lock = self.lock})
                     self.icolliders[1].dead = true
-                --end
-            else
-                IT[self.icolliders[1].type].func()
+                end
+            elseif IT[self.icolliders[1].type].family == 'tome' then
+                local tome = EquipedTome.name
+                local upgrades = current_upgrades
+
+                EquipedTome = TT[self.icolliders[1].type]
+                current_upgrades = self.icolliders[1].upgrades
+
+                activeitem = {func=function() print('no item') end}
+                TomeBuffs = {Attackspeed = 1, Accuracy = 1, BulletSpeed = 1, BulletSize = 1, Damage = 1, Cooldown = 1, Speed = 1, scale = 1}
+                for i=1, current_upgrades[1] do
+                    EquipedTome.TopPath['Up'..i]()
+                end
+                for i=1, current_upgrades[2] do
+                    EquipedTome.MidPath['Up'..i]()
+                end
+                for i=1, current_upgrades[3] do
+                    EquipedTome.BotPath['Up'..i]()
+                end
+                
+                self.area:addGameObject('Item', self.X, self.Y, {type= tome, upgrades=upgrades})
                 self.icolliders[1].dead = true
+            else
+                if not itemmenu then 
+                    itemmenu = true
+                    local itemstring = self.icolliders[1].type
+                    self.area:addGameObject('Itemmenu', 0, 0, {func = function() IT[itemstring].func() end})
+                    self.icolliders[1].dead = true
+                end
             end
         end
     end
@@ -124,16 +164,17 @@ function Player:draw()
     iframes = iframes + 1
     if iframes == 3 then iframes = iframes - 0 end
 
-    local wiz = love.graphics.newImage("assets/evil_wizard.png")
     if self.buffer == true and iframes == 0 then
-        love.graphics.draw(wiz, self.X-self.IW/2, self.Y-self.IH/2, 0, self.IW/254, self.IH/411)
+        love.graphics.draw(ST["Wizard"], self.X-self.IW/2, self.Y-self.IH/2, 0, self.IW/254, self.IH/411)
     end
     if self.buffer == false then
-        love.graphics.draw(wiz, self.X-self.IW/2, self.Y-self.IH/2, 0, self.IW/254, self.IH/411)
+        love.graphics.draw(ST["Wizard"], self.X-self.IW/2, self.Y-self.IH/2, 0, self.IW/254, self.IH/411)
     end
-    love.graphics.circle('line', self.X, self.Y, self.W*3)
+    if Debug_Vision then
+        love.graphics.circle('line', self.X, self.Y, self.W*3)
+    end
 
     self.printx, self.printy = camera:toCameraCoords(0,0)
-        love.graphics.print(self.hp, self.printx*-1, (self.printy-40)*-1)
-        love.graphics.print(string.format("Buffer: %s", tostring(self.buffer)), self.printx*-1, (self.printy-60)*-1)
+    --love.graphics.print(self.hp, self.printx*-1, (self.printy-40)*-1)
+    --love.graphics.print(string.format("Buffer: %s", tostring(self.buffer)), self.printx*-1, (self.printy-60)*-1)
 end

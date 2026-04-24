@@ -3,7 +3,7 @@ Bullet = GameObject:extend()
 function Bullet:new(area, x, y, opts)
     Bullet.super.new(self, area, x, y, opts)
     self.layer = 'main layer'
-    self.image = love.graphics.newImage("assets/basicdev.png")
+    self.image = ST['BulletPlaceholder'] or opts.image
     self.area = area
     self.x = x
     self.y = y
@@ -116,6 +116,7 @@ function Bullet:new(area, x, y, opts)
         self.shake = 0
         self.shaketime = 0
         self.culltime = 0
+        self.scale = 1
 
         self.pierce = false
 
@@ -124,7 +125,7 @@ function Bullet:new(area, x, y, opts)
         else
             local MX, MY = love.mouse.getPosition()
             self.x, self.y = camera:toWorldCoords(MX/sx, MY/sy)
-            self.area:addGameObject('Prop', self.x, self.y, {w=25, h=100*self.size, r=self.rot, hp=self.hp})
+            self.area:addGameObject('Prop', self.x, self.y, {w=25, h=100*self.size, r=self.rot, hp=self.hp, type="vinewall"})
         end
     end
 

@@ -11,7 +11,7 @@ function Enemy:new(area, x, y, opts)
     self.invincible = false
     self.contactdamage = true
     if self.type == 'basic' or self.type == 'leap' then
-        self.image = love.graphics.newImage("assets/basicenemy.png")
+        self.image = ST['EnemyBasic']
         self.frame = 1
         self.max_frames = 6
         self.quads = {}
@@ -23,7 +23,7 @@ function Enemy:new(area, x, y, opts)
          self.moveanim = true
          self.turnanim = true
     elseif self.type == 'gunner' or self.type =='shotgunner' then
-        self.image = love.graphics.newImage("assets/flyingenemy.png")
+        self.image = ST['EnemyFlying']
         self.frame = 1
         self.max_frames = 2
         self.quads = {}
@@ -35,7 +35,7 @@ function Enemy:new(area, x, y, opts)
         self.moveanim = true
         self.turnanim = true
     elseif self.type == 'sentry' then
-        self.image = love.graphics.newImage("assets/Sentrydev.png")
+        self.image = ST['EnemySentry']
         self.frame = 2
         self.max_frames = 2
         self.quads = {}
@@ -48,7 +48,7 @@ function Enemy:new(area, x, y, opts)
         self.turnanim = false
         self.contactdamage = false
     elseif self.type == 'trenchcoat' then
-        self.image = love.graphics.newImage("assets/Trenchcoatdev.png")
+        self.image = ST['EnemyTrenchcoat']
         self.frame = 2
         self.max_frames = 2
         self.quads = {}

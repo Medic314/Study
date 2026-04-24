@@ -121,6 +121,35 @@ function Room:new(area, x, y, opts)
         self.area:addGameObject('Summoner', self.x+(25*tile), self.y+(35*tile), {type='sentry', hp = 10}) end}
 
         self.special = {types = {'sentry'}, waves = {3}}
+    elseif self.id == 5 then
+        self.Barea = {x=x, y=y, w=(29*tile), h=(21*tile)}
+        self.area:addGameObject('Wall', x, y, {w=self.Barea.w, h=self.Barea.h, nc = true, tileskin='tilebg'})
+
+        self.area:addGameObject('Wall', x, y, {w=(29*tile), h=tile})
+        
+        self.area:addGameObject('Wall', x, y+(20*tile), {w=(29*tile), h=tile})
+        
+        self.area:addGameObject('Wall', x, y, {w=tile, h=(6*tile)})
+        self.area:addGameObject('Wall', x, y+(14*tile), {w=tile, h=(6*tile)})
+        
+        self.area:addGameObject('Wall', x+(28*tile), y, {w=tile, h=(6*tile)})
+        self.area:addGameObject('Wall', x+(28*tile), y+(14*tile), {w=tile, h=(6*tile)})
+
+        self.area:addGameObject('Prop', x+14*tile, y+10*tile, {w=150, h=50, destructable = false, type="chest"})
+        
+        self.enterance = {
+            {x = x+(13*tile), y = y, w = (8*tile), h = tile},  -- top gap
+            {x = x+(28*tile), y = y+(6*tile), w = tile, h = (8*tile)},  -- right gap
+            {x = x+(13*tile), y = y+(20*tile), w = (8*tile), h = tile},  -- bottom gap
+            {x = x, y = y+(6*tile), w = tile, h = (8*tile)}   -- left gap
+        }
+        self.door = {
+            {x = x+(13*tile), y = y, w = (8*tile), h = tile},  -- top door
+            {x = x+(28*tile), y = y+(6*tile), w = tile, h = (8*tile)},  -- right door
+            {x = x+(13*tile), y = y+(20*tile), w = (8*tile), h = tile},  -- bottom door
+            {x = x, y = y+(6*tile), w = tile, h = (8*tile)}   -- left door
+        }
+        self.waves = {0}
     end
 end
 

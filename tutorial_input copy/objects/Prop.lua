@@ -2,7 +2,7 @@ Prop = GameObject:extend()
 
 function Prop:new(area, x, y, opts)
     Prop.super.new(self, area, x, y, opts)
-    self.layer = 'background'
+    self.layer = 'foreground'
     self.x = x
     self.y = y
     self.w = opts.w
@@ -11,8 +11,17 @@ function Prop:new(area, x, y, opts)
     self.r = opts.r or nil
     self.destructable = opts.destructable or true
     self.hp = opts.hp or 10
+    self.item = opts.item or nil
+
+    self.type = opts.type
 
     self.buffer = false
+
+    if self.type == "chest" then
+        self.hits = 3
+        self.firstopen = false
+        self.image = ST['ChestUp']
+    end
 
 
     local vert1x, vert1y = self.x, self.y
@@ -39,15 +48,15 @@ function Prop:new(area, x, y, opts)
 end
 
 function Prop:update(dt)
-
-    if Wallkill then
-        Wallkill = false
-        Wallup = false
-        self.dead = true
-    else
-        Wallup = true
+    if self.type == "vinewall" then
+        if Wallkill then
+            Wallkill = false
+            Wallup = false
+            self.dead = true
+        else
+            Wallup = true
+        end
     end
-
 
     self.collider:setPreSolve(function(collider_1, collider_2, contact)
         contact:setEnabled(false)
@@ -58,6 +67,9 @@ function Prop:update(dt)
                     print("WHit")
                     collider_1.whit = true
                     timer:after(collider_2.timer, function() collider_1.whit = false end)
+                    if self.type == "chest" then
+                        self.hits = self.hits - 1
+                    end
                 end
             elseif collider_2.bullettype == 'basic' and collider_2.upgrade == 3 then
                 contact:setEnabled(false)
@@ -67,7 +79,13 @@ function Prop:update(dt)
                     collider_1.on_fire = true
                     timer:after(4, function() collider_1.on_fire = false end)
                 end
+                if self.type == "chest" then
+                    self.hits = self.hits - 1
+                end
             else
+                if self.type == "chest" then
+                    self.hits = self.hits - 1
+                end
                 contact:setEnabled(false)
                 self.hp = self.hp - collider_2.damage/2
                 print("Hit")
@@ -88,13 +106,39 @@ function Prop:update(dt)
             end
         end
     end)
-
-    if self.hp <= 0 then
-        Wallup = false
-        self.dead = true
+    if self.destructable then
+        if self.hp <= 0 then
+            if self.type == "vinewall" then
+                Wallup = false
+            end
+            self.dead = true
+        end
+    end
+    if self.type == "chest" then
+        if self.hits <= 0 then
+            self.image = ST['ChestDown']
+            self.h = 30
+            if not self.firstopen then
+                self.firstopen = true
+                local list = IT['Q1Roll']
+                local item = list[math.random(#list)]
+                if self.item then
+                    self.area:addGameObject('Item', self.x, self.y, {type=self.item})
+                else
+                    self.area:addGameObject('Item', self.x, self.y, {type=item})
+                end
+            end
+        end
     end
 end
 
 function Prop:draw()
-    love.graphics.print(self.hp, self.x, self.y)
+    if self.type == 'chest' then
+        love.graphics.draw(self.image, self.x, self.y-45, 0, 2, 2)
+        if self.chestdown then
+            love.graphics.draw(self.image, self.x, self.y-70, 0, 2, 2)
+        end
+    else
+        love.graphics.print(self.hp, self.x, self.y)
+    end
 end
