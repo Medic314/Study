@@ -13,7 +13,6 @@ function Stage:init()
     misspulse = false
     enemyx, enemyy = 0, 0
     playerx, playery = 0, 0
-    gamestates = {timeelapsed = 0, starlevel = 0, max_starlevel = 100, roundstarted = false, playerstamina = 20, playerhp = 200, max_playerhp = 200, consecutivepunches = 0, enemy = 'sloth'}
     timer:after(2, function() Input_lock = false gamestates.roundstarted = true end)
 
     input:bind('z', 'leftpunch')

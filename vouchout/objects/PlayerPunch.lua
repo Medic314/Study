@@ -7,6 +7,7 @@ function PlayerPunch:new(area, x, y, opts)
     self.y = y+1000
     self.type = opts.type
     self.damage = opts.damage or 25
+    self.sp = opts.sp or false
     self.w = 50
     self.h = 50
 
@@ -15,6 +16,7 @@ function PlayerPunch:new(area, x, y, opts)
     self.collider:setObject(self)
     self.collider.type = self.type
     self.collider.damage = self.damage
+    self.collider.sp = self.sp
     self.x = x
     self.y = y
 end

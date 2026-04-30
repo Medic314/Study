@@ -1,27 +1,37 @@
-Menu = Object:extend()
+Menu1 = Object:extend()
 
-function Menu:new()
+function Menu1:new()
     Debug_Vision = true
     self.area = Area(self)
     self.main_canvas = love.graphics.newCanvas(gw, gh)
     self:init()
+    Gameselect = nil
+    NextEnemy = 1
 end
 
-function Menu:init()
-    self.area:addGameObject('Button', 0, 0)
-    input:bind('mouse1', 'left_click')
+function Menu1:init()
+    input:bind('up', 'up')
+    input:bind('down', 'down')
+    input:bind('left', 'left')
+    input:bind('right', 'right')
+    input:bind('z', 'z')
+    
+    self.area:addGameObject('Menu1B')
 end
 
 
 
-function Menu:update(dt)
+function Menu1:update(dt)
     self.area:update(dt)
     paused = false
+    timer:update(dt)
+    camera:update(dt)
+    camera:follow(0, 0)
 end
 
 
 
-function Menu:draw()
+function Menu1:draw()
     love.graphics.setCanvas(self.main_canvas)
     love.graphics.clear()
 

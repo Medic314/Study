@@ -11,15 +11,17 @@ function Enemy:new(area, x, y, opts)
     self.collider = self.area.world:newRectangleCollider(self.x-(self.w/2), self.y, self.w, self.h)
     self.collider:setCollisionClass('Enemy')
     self.collider:setObject(self)
-    self.x = 0
-    self.y = 100
-    self.sx = 0
-    self.sy = 100
-    self.vx = {x=0}
-    self.vy = {y=100}
+    
     gamestates.round = 3
     if gamestates.enemy == 'sloth' then
+        self.x = 0
+        self.y = 100
+        self.sx = 0
+        self.sy = 100
+        self.vx = {x=0}
+        self.vy = {y=100}
         self.hp = 600
+
         self.maxhp = self.hp
         self.energy = 15
         self.type = 'sloth'
@@ -30,17 +32,51 @@ function Enemy:new(area, x, y, opts)
         self.guardtime = 0
         self.maxguardtime = 7.5
         self.display_hp = self.maxhp
-    end
-    self.image = ST['Enemy']
-    self.IW, self.IH = 200, 375
-    self.max_frames = 11
-    self.frame = 1
-    self.quads = {}
-    self.idleframe = 1
-    self.hitanim = false
-    timer:every(2, function() self.idleframe = 1 timer:after(1, function() self.idleframe = 2 end) end)
 
-    self.scale = 1.5
+        self.image = ST['Enemy']
+        self.IW, self.IH = 200, 375
+        self.max_frames = 12
+        self.frame = 1
+        self.quads = {}
+        self.idleframe = 1
+        self.hitanim = false
+        timer:every(2, function() self.idleframe = 1 timer:after(1, function() self.idleframe = 2 end) end)
+        self.scale = 1.5
+        self.attackpats = 3
+    end
+    if gamestates.enemy == 'pride' then
+        self.x = 0
+        self.y = 100
+        self.sx = 0
+        self.sy = 100
+        self.vx = {x=0}
+        self.vy = {y=100}
+
+        self.hp = 1000
+        self.maxhp = self.hp
+        self.energy = 15
+        self.type = 'pride'
+        self.currentguard = 1
+        self.guard = {}
+        self.guardstances = {{}, {'lhook'}, {'rhook'}, {'ljab'}, {}, {'rjab', 'ljab'}, {}, {}, {'lhook', 'rhook'}}
+        self.specialblock = false
+        self.guardtime = 0
+        self.maxguardtime = 7.5
+        self.display_hp = self.maxhp
+        self.tauntc = true
+
+        self.image = ST['Enemy']
+        self.IW, self.IH = 200, 375
+        self.max_frames = 12
+        self.frame = 1
+        self.quads = {}
+        self.idleframe = 1
+        self.hitanim = false
+        --timer:every(2, function() self.idleframe = 1 timer:after(1, function() self.idleframe = 2 end) end)
+        self.scale = 1.5
+        self.attackpats = 0
+    end
+
     local imgW, imgH = self.image:getDimensions()
 
     for i = 1, self.max_frames do
@@ -51,12 +87,14 @@ function Enemy:new(area, x, y, opts)
     self.hitcounts = 0
     self.hitlist = {}
     self.attacking = true
-    self.attackpats = 3
     self.counterpunch = false
     self.stunb = false
     self.stuntype = 'jab'
     self.stage = 0
     self.pattern = nil
+    self.downed = false
+    self.downtimer = 0
+    self.instadowned = false
 
     local function cancelall()
         local maxtimers = 10
@@ -81,25 +119,30 @@ function Enemy:new(area, x, y, opts)
         end
     end
 
-    local function stun(duration)
+    local function stun(duration, frame)
         self.cancelall()
-        self.frame = 7
+        frame = frame or 7
+        self.frame = frame
         self.attacking = false
         self.stunb = true
         self.counterpunch = false
-        timer:after(duration, function() self.stunb = false self.attacking = true self.frame = 1 end, 'stun1')
+        if not self.downed then
+            timer:tween(0.25, camera, {scale = 1.05}, 'out-sine')
+        end
+        timer:after(duration, function() self.stunb = false self.attacking = true self.frame = 1 timer:tween(0.25, camera, {scale = 1}, 'out-sine') timer:after(0.25, function() camera.scale = 1 end) end, 'stun1')
     end
 
-    local function jab(speed, direction)
+    local function sjab(speed, direction)
         if direction == 'r' then
             self.scale = 1.5
         else
             self.scale = -1.5
         end
         self.frame = 1
-        timer:after((speed/3), function() self.frame = 3 timer:after((speed/3), function() self.frame = 4 self.area:addGameObject('EnemyPunch', 0, 100, {type='jab', direction = direction}) timer:after((speed/25), function() self.frame = 2 self.stuntype = 'jab' self.counterpunch = true timer:after((speed/3), function() self.frame = 1 self.counterpunch = false self.scale = 1.5 end, 'jab4') end, 'jab3') end, 'jab2') end, 'jab1')
+        timer:after(((speed/6)+(speed/9)), function() self.frame = 3 timer:after(speed/9, function() self.frame = 12 timer:after((speed/3), function() self.frame = 4 self.area:addGameObject('EnemyPunch', 0, 100, {type='jab', direction = direction}) timer:after((speed/25), function() self.frame = 2 self.stuntype = 'jab' self.counterpunch = true timer:after((speed/3), function() self.frame = 1 self.counterpunch = false end, 'jab5') end, 'jab4') end, 'jab3')  end, 'jab2') end, 'jab1')
+        timer:after(speed, function() self.scale = 1.5 end)
     end
-    local function special()
+    local function sspecial()
         self.frame = 1
         timer:after(0.60, function() self.guard = {} end, 'special2')
         timer:tween(0.80, self.vx, {x=self.sx}, 'out-sine')
@@ -107,17 +150,18 @@ function Enemy:new(area, x, y, opts)
         timer:after(0.95, function() self.block = {'ljab', 'rjab', 'lhook', 'rhook'} self.area:addGameObject('EnemyPunch', 0, 100, {type='hook', direction = 'l', damage=75}) end, 'special1')
         timer:after(1.25, function() self.stage = 4 self.pat3() end, 'special3')
     end
-    local function hook(speed, direction)
+    local function shook(speed, direction)
         self.frame = 1
         if direction == 'r' then
             self.scale = 1.5
-            timer:after((speed/2), function() self.frame = 5 self.x = 10 self.vy.y = 150 timer:after((speed/4), function() self.frame = 6 self.vy.y = self.sy self.area:addGameObject('EnemyPunch', 0, 100, {type='hook', direction = direction, damage=35}) timer:after((0.1), function() self.frame = 6 self.stuntype = 'hook' self.counterpunch = true self.x = 0 timer:after(speed/4, function() self.counterpunch = false self.frame = 1 self.scale = 1.5 end, 'hook4') end, 'hook3') end, 'hook2') end, 'hook1')
+            timer:after((speed/4), function() self.frame = 5 self.x = 10 self.vy.y = 150 timer:after((speed/4), function() self.frame = 6 self.vy.y = self.sy self.area:addGameObject('EnemyPunch', 0, 100, {type='hook', direction = direction, damage=35}) timer:after((0.1), function() self.frame = 6 self.stuntype = 'hook' self.counterpunch = true self.x = 0 timer:after(speed/4, function() self.counterpunch = false self.frame = 1 end, 'hook4') end, 'hook3') end, 'hook2') end, 'hook1')
         else
             self.scale = -1.5
-            timer:after((speed/2), function() self.frame = 5 self.x = -10 self.vy.y = 150 timer:after((speed/4), function() self.frame = 6 self.vy.y = self.sy-50 self.area:addGameObject('EnemyPunch', 0, 100, {type='hook', direction = direction, damage=35}) timer:after((0.1), function() self.vy.y = self.sy self.frame = 6 self.stuntype = 'hook' self.counterpunch = true self.x = 0 timer:after(speed/4, function() self.counterpunch = false self.frame = 1 self.scale = 1.5 end, 'hook4') end, 'hook3') end, 'hook2') end, 'hook1')
+            timer:after((speed/2), function() self.frame = 5 self.x = -10 self.vy.y = 150 timer:after((speed/4), function() self.frame = 6 self.vy.y = self.sy-50 self.area:addGameObject('EnemyPunch', 0, 100, {type='hook', direction = direction, damage=35}) timer:after((0.1), function() self.vy.y = self.sy self.frame = 6 self.stuntype = 'hook' self.counterpunch = true self.x = 0 timer:after(speed/4, function() self.counterpunch = false self.frame = 1 end, 'hook4') end, 'hook3') end, 'hook2') end, 'hook1')
         end
+        timer:after(speed, function() self.scale = 1.5 end)
     end
-    local function pat1()
+    local function spat1()
         self.pattern = 'pat1'
         self.attacking = false
         print(self.pattern, self.stage)
@@ -137,9 +181,10 @@ function Enemy:new(area, x, y, opts)
             self.stage = 0
         end
     end
-    local function pat2()
+    local function spat2()
         self.pattern = 'pat2'
         self.attacking = false
+        print(self.pattern, self.stage)
         if self.stage == 1 then
             self.hook(3, 'l')
         end
@@ -156,7 +201,8 @@ function Enemy:new(area, x, y, opts)
             self.stage = 0
         end
     end
-    local function pat3()
+    local function spat3()
+        print(self.pattern, self.stage)
         self.pattern = 'pat3'
         self.attacking = false
         if self.stage == 1 then
@@ -180,23 +226,41 @@ function Enemy:new(area, x, y, opts)
             self.attackpats = 0
         end
     end
+    local function taunt(speed) 
 
-    
-    self.pat1 = pat1
-    self.pat2 = pat2
-    self.pat3 = pat3
-    self.cancelall = cancelall 
-    self.stun = stun
-    self.jab = jab
-    self.hook = hook
-    self.special = special
+    end
+
+    if self.type == 'sloth' then
+        self.pat1 = spat1
+        self.pat2 = spat2
+        self.pat3 = spat3
+        self.cancelall = cancelall 
+        self.stun = stun
+        self.jab = sjab
+        self.hook = shook
+        self.special = sspecial
+    end
+    if self.type == 'pride' then
+        self.pat1 = spat1
+        self.taunt = taunt
+        self.pat2 = spat2
+        self.pat3 = spat3
+        self.cancelall = cancelall 
+        self.stun = stun
+        self.jab = sjab
+        self.hook = shook
+        self.special = sspecial
+    end
 end
 
 function Enemy:update(dt)
     if gamestates.roundstarted then
-        gamestates.timeelapsed = gamestates.timeelapsed + dt
+        if not self.downed then
+            gamestates.timeelapsed = gamestates.timeelapsed + dt
+        end
+
         if self.type == 'sloth' then
-            if gamestates.timeelapsed > 3 then
+            if gamestates.timeelapsed > 4 then
                 if self.attacking then
                     if self.attackpats < 3 then
                         if not self.pattern then
@@ -254,6 +318,66 @@ function Enemy:update(dt)
                 end
             end
         end
+
+        if self.type == 'pride' then
+            if self.gotem then
+                print('gotem2')
+                self.gotem = false
+                timer:after(3, function()
+                self.tauntc = false
+                self.attacking = true end)
+            end
+            if self.attacking then
+                if self.attackpats <= 3 then
+                    if self.tauntc then
+                        self.attacking = false
+                        self.tauntc = true
+                        self.pattern = nil
+                        print('taunt')
+                    else
+                        if not self.pattern then
+                            local randompercent = random(0, 100)
+                            print(randompercent)
+                            if randompercent > 0 and randompercent < 30 then
+                                self.pattern = 'pat1'
+                            elseif randompercent > 30 and randompercent < 60 then
+                                self.pattern = 'pat2'
+                            elseif randompercent > 60 and randompercent < 90 then
+                                self.pattern = 'pat3'
+                            else
+                                self.pattern = 'revert'
+                            end
+                        else
+                            if self.pattern == 'pat1' then
+                                self.attacking = false
+                                print(self.pattern)
+                                self.attackpats = self.attackpats + 1
+                                timer:after(3, function() self.attacking = true self.pattern = nil end)
+                            elseif self.pattern == 'pat2' then
+                                self.attacking = false
+                                print(self.pattern)
+                                self.attackpats = self.attackpats + 1
+                                timer:after(3, function() self.attacking = true self.pattern = nil end)
+                            elseif self.pattern == 'pat3' then
+                                self.attacking = false
+                                print(self.pattern)
+                                self.attackpats = self.attackpats + 1
+                                timer:after(3, function() self.attacking = true self.pattern = nil end)
+                            elseif self.pattern == 'revert' then
+                                self.attacking = false
+                                print(self.pattern)
+                                timer:after(3, function() self.attacking = true self.tauntc = true self.pattern = nil end)
+                            end
+                        end
+                    end
+                else
+                    self.attacking = false
+                    print('special')
+                    self.attackpats = 0
+                    timer:after(4, function() self.attacking = true self.tauntc = true self.pattern = nil end)
+                end
+            end
+        end
     end
 
     if self.frame == 1 or self.frame == 2 then
@@ -286,19 +410,22 @@ function Enemy:update(dt)
                     blocked = true
                     self.guardtime = self.guardtime - 2
                     print('blocked')
-                    if not self.specialblock then
-                        if collider_2.type == 'lhook' then
-                            self.frame = 8
-                        end
-                        if collider_2.type == 'rhook' then
-                            self.frame = 9
-                        end
-                        if collider_2.type == 'ljab' then
-                            self.frame = 10
-                        end
-                        if collider_2.type == 'rjab' then
-                            self.frame = 11
-                        end
+                    
+                        if not self.specialblock then
+                            if self.frame == 1 or self.frame == 2 or self.frame == 4 or self.frame == 6 or self.frame == 8 or self.frame == 9 or self.frame == 10 or self.frame == 11 then
+                                    if collider_2.type == 'lhook' then
+                                        self.frame = 8
+                                    end
+                                    if collider_2.type == 'rhook' then
+                                        self.frame = 9
+                                    end
+                                    if collider_2.type == 'ljab' then
+                                        self.frame = 10
+                                    end
+                                    if collider_2.type == 'rjab' then
+                                        self.frame = 11
+                                    end
+                            end
                         timer:after(0.20, function() if self.frame == 8 or self.frame == 8 or self.frame == 10 or self.frame == 11 then self.frame = 1 end end)
                     else
                         misspulse = true
@@ -312,42 +439,70 @@ function Enemy:update(dt)
                 end
             end
             if not blocked then
-                self.guardtime = self.guardtime + 1.5
-                if self.hitcounts then
-                    self.hitcounts = self.hitcounts + 1
-                end
-                self.hitlist[#self.hitlist+1] = collider_2.type
-
-                if self.counterpunch == true then
-                    if self.stuntype == 'jab' then
-                        self.stun(1.5)
-                    else
-                        self.stun(1.5)
+                if self.tauntc then
+                    self.gotem = true
+                    print('gotem1')
+                else
+                    self.guardtime = self.guardtime + 1.5
+                    if self.hitcounts then
+                        self.hitcounts = self.hitcounts + 1
                     end
-                end
+                    self.hitlist[#self.hitlist+1] = {collider_2.type, collider_2.sp}
 
-                gamestates.starlevel = gamestates.starlevel + collider_2.damage / 2
-                gamestates.playerhp = gamestates.playerhp + collider_2.damage / 10
-                gamestates.consecutivepunches = gamestates.consecutivepunches + 1
-                self.hitanim = true
-                timer:after(0.2, function() self.hitanim = false end)
-                if self.specialblock then self.hp = self.hp - self.hp self.cancelall() self.stage = 4 self.pat3() end
-                self.hp = self.hp - collider_2.damage
-                timer:tween(0.5, self, {display_hp = self.hp}, 'out-sine')
+                    if self.counterpunch == true then
+                        if self.stuntype == 'jab' then
+                            self.stun(1.5)
+                        else
+                            self.stun(1.5)
+                        end
+                    end
+
+                    gamestates.starlevel = gamestates.starlevel + collider_2.damage / 2
+                    gamestates.playerhp = gamestates.playerhp + collider_2.damage / 10
+                    gamestates.consecutivepunches = gamestates.consecutivepunches + 1
+                    self.hitanim = true
+                    timer:after(0.2, function() self.hitanim = false end)
+                    if self.specialblock then self.hp = self.hp - self.hp self.instadowned = true self.cancelall() self.attacking = true 
+                self.attackpats = self.attackpats + 1
+                self.pattern = nil
+                self.specialblock = false
+                self.stage = 0
+                self.attackpats = 0 end
+                    self.hp = self.hp - collider_2.damage
+                    timer:tween(0.5, self, {display_hp = self.hp}, 'out-sine')
+                end
             end
         end
     end)
 
     if self.hp <= 0 then
+        self.downtimer = 0
         gamestates.round = gamestates.round - 1
-        if gamestates.round <= 0 then
-            self.dead = true
+        local downtime = 5
+        if gamestates.round == 2 then
+            downtime = math.ceil(random(0.0001, 4))
+            
+        elseif gamestates.round == 1 then
+            local randompercent = random(0, 100)
+            if randompercent < 90 then
+                downtime = math.ceil(random(4, 8))
+            else
+                downtime = 10
+            end
+        elseif  gamestates.round == 0 then
+            downtime = 10
         end
+        if self.instadowned == true then
+            if self.hitlist[#self.hitlist][2] then
+                downtime = 10
+            end
+        end
+        self.instadowned = false
         self.hp = 1
         self.cancelall()
         self.specialblock = true
         self.attacking = false
-        self.frame = 7
+        self.frame = 1
         self.guard = {'ljab', 'rjab', 'lhook', 'rhook'}
         if gamestates.playerhp > gamestates.max_playerhp/1.5 then
             self.hp = self.maxhp
@@ -359,20 +514,56 @@ function Enemy:update(dt)
             end
         end
         local direction = 0
-        if self.hitlist[#self.hitlist] == 'rjab' or self.hitlist[#self.hitlist] == 'rhook' then
+        if self.hitlist[#self.hitlist][1] == 'rjab' or self.hitlist[#self.hitlist][1] == 'rhook' then
             direction = -300
         else
             direction = 300
         end
-        self.stun(5)
-        timer:tween(0.5, self.vy, {y=15}, 'out-sine')
-        timer:after(0.5,function() timer:tween(0.5, self.vy, {y=0}, 'out-sine') end)
-        timer:tween(1, self.vx, {x=direction}, 'out-sine')
-        timer:after(4, function() timer:tween(1, self.vy, {y=self.sy}, 'out-sine') end)
-        timer:after(4, function() timer:tween(1, self.vx, {x=self.sx}, 'out-sine') end)
+        self.downed = true
+        if downtime == 10 then
+            self.stun(downtime, 1)
+            if Gameselect == 'TA' then
+                timer:after(downtime, function() self.dead = true self.cancelall() timer:after(2, function() savescore(self.type .. 'LB.json', Username, gamestates.timeelapsed, 'less') gotoRoom('ScoreScreen') end)end)
+            end
+            if Gameselect == 'campaign' then
+                timer:after(downtime, function() self.dead = true self.cancelall() timer:after(2, function() gotoRoom('ScoreScreen') end)end)
+            end
+            timer:tween(0.5, self.vy, {y=15}, 'out-sine')
+            timer:after(0.5,function() timer:tween(0.5, self.vy, {y=0}, 'out-sine') end)
+            timer:tween(1, self.vx, {x=direction}, 'out-sine')
+            for i=1, downtime do
+                timer:after(i, function() self.downtimer = self.downtimer + 1
+                local randompercent2 = random(0, 100)
+                    if randompercent2 > 80-(i*5) then
+                        print('struggle')
+                    end
+                 end)
+            end
+        else
+            self.stun(downtime+3.5, 1)
+            timer:tween(0.5, self.vy, {y=15}, 'out-sine')
+            timer:after(0.5,function() timer:tween(0.5, self.vy, {y=0}, 'out-sine') end)
+            timer:tween(1, self.vx, {x=direction}, 'out-sine')
+            timer:after(downtime, function() timer:tween(1, self.vy, {y=self.sy}, 'out-sine') end)
+            timer:after(downtime, function() timer:tween(1, self.vx, {x=self.sx}, 'out-sine') end)
+            for i=1, downtime do
+                timer:after(i, function() self.downtimer = self.downtimer + 1
+                local randompercent2 = random(0, 100)
+                    if randompercent2 > 60 then
+                        print('struggle')
+                    end
+                 end)
+                
+            end
 
-        timer:tween(5, self, {display_hp = self.hp}, 'out-sine')
-        timer:after(5, function() self.stage = 4 self.pat3() end)
+            timer:after(downtime, function() timer:tween(1, self, {display_hp = self.hp}, 'out-sine') end)
+            timer:after(downtime+3, function() self.attacking = true 
+            self.attackpats = self.attackpats + 1
+            self.pattern = nil
+            self.specialblock = false
+            self.stage = 0
+            self.attackpats = 0 self.downed = false  self.downtimer = 0 self.cancelall() end)
+        end
     end
     enemyx, enemyy = self.x, self.y
 end
@@ -389,6 +580,7 @@ function Enemy:draw()
         for i=1, #self.guard do
             love.graphics.print(tostring(self.guard[i]), -gw/2, (-gh/2)+(140+(i*20)))
         end
+        love.graphics.print(tostring(self.downtimer), -gw/2+100, (-gh/2)+20)
     end
 
     love.graphics.setColor(0.5, 0.5, 0.5)

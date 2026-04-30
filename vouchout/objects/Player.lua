@@ -145,14 +145,14 @@ function Player:update(dt)
                 print("lhook")
                 Input_lock = true
                 self.area:addGameObject('PlayerPunch', -50, -50, {type='lhook', damage = 20})
-                self.hookaniml(0.4-(gamestates.consecutivepunches/120), 'lhook')
-                timer:after(0.4-(gamestates.consecutivepunches/120), function() if not misspulse then Input_lock = false else self.missswitch = true end end, 'lhook1')
+                self.hookaniml(0.45-(gamestates.consecutivepunches/120), 'lhook')
+                timer:after(0.45-(gamestates.consecutivepunches/120), function() if not misspulse then Input_lock = false else self.missswitch = true end end, 'lhook1')
             else
                 print("ljab")
                 Input_lock = true
                 self.area:addGameObject('PlayerPunch', -50, 50, {type='ljab', damage = 22.5})
-                self.punchaniml(0.45, 'ljab')
-                timer:after(0.45, function() if not misspulse then Input_lock = false else self.missswitch = true end end, 'ljab1')
+                self.punchaniml(0.5, 'ljab')
+                timer:after(0.5, function() if not misspulse then Input_lock = false else self.missswitch = true end end, 'ljab1')
             end
         else
             if input:pressed('rightpunch') or input:down('rightpunch') then
@@ -176,19 +176,19 @@ function Player:update(dt)
                 if input:down('up') then
                     print("shook")
                     Input_lock = true
-                    self.area:addGameObject('PlayerPunch', 50, -50, {type='rhook', damage = 125})
+                    self.area:addGameObject('PlayerPunch', 50, -50, {type='rhook', damage = 125, sp=true})
                     self.hookanimr(1-(gamestates.consecutivepunches/40), 'rhook')
                     timer:after(1-(gamestates.consecutivepunches/40), function() if not misspulse then Input_lock = false else self.missswitch = true end end, 'rhook1')
                 else
                     print("sjab")
                     Input_lock = true
-                    self.area:addGameObject('PlayerPunch', 50, 50, {type='rjab', damage = 150})
+                    self.area:addGameObject('PlayerPunch', 50, 50, {type='rjab', damage = 150, sp=true})
                     self.punchanimr(1.2-(gamestates.consecutivepunches/40), 'rjab')
                     timer:after(1.2-(gamestates.consecutivepunches/40), function() if not misspulse then Input_lock = false else self.missswitch = true end end, 'rjab1')
                 end
             end
         end
-        if input:pressed('down') then
+        if input:pressed('down') or input:down('down') then
             print('duck')
             Input_lock = true
             self.dodge = 'd'
@@ -196,8 +196,7 @@ function Player:update(dt)
             timer:tween(0.375, self.y, {y=self.dy}, 'out-sine')
             timer:after(0.375, function() timer:tween(0.5, self.y, {y=self.sy}, 'in-sine') end, 'duck1')
             timer:after(0.75, function() Input_lock = false self.dodge = false end, 'duck2')
-        end
-        if input:pressed('left') then
+        elseif input:pressed('left') or input:down('left') then
             print("dodgeleft")
             self.dodge = 'l'
             timer:tween(0.25, self.x, {x=self.lx}, 'out-sine')
@@ -205,8 +204,7 @@ function Player:update(dt)
             self.dodgeaniml(0.7, 'dodgel')
             Input_lock = true
             timer:after(0.7, function() Input_lock = false self.dodge = false end, 'dodgel2')
-        end
-        if input:pressed('right') then
+        elseif input:pressed('right') or input:down('right') then
             self.dodge = 'r'
             print('dodgeright')
             timer:tween(0.25, self.x, {x=self.rx}, 'out-sine')

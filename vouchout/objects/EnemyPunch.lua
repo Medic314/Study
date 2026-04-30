@@ -8,7 +8,7 @@ function EnemyPunch:new(area, x, y, opts)
     self.type = opts.type
     self.damage = opts.damage or 25
     self.direction = opts.direction
-    self.w = 200
+    self.w = 500
     self.h = 100
 
     self.collider = self.area.world:newRectangleCollider(self.x-(self.w/2), self.y, self.w, self.h)
