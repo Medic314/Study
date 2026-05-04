@@ -8,6 +8,8 @@ function EnemyPunch:new(area, x, y, opts)
     self.type = opts.type
     self.damage = opts.damage or 25
     self.direction = opts.direction
+    self.block = opts.block
+    self.hcheck = opts.hcheck
     self.w = 500
     self.h = 100
 
@@ -15,7 +17,9 @@ function EnemyPunch:new(area, x, y, opts)
     self.collider:setCollisionClass('EnemyPunch')
     self.collider:setObject(self)
     self.collider.type = self.type
+    self.collider.block = self.block
     self.collider.direction = self.direction
+    self.collider.hcheck = self.hcheck
     self.collider.damage = self.damage
     self.x = x
     self.y = y

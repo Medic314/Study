@@ -41,25 +41,25 @@ function Player:new(area, x, y, opts)
     self.stunned = false
 
     local function cancelall()
-        for i = 1, 5 do
+        for i = 1, 10 do
             timer:cancel('lhook' .. i)
         end
-        for i = 1, 5 do
+        for i = 1, 10 do
             timer:cancel('ljab' .. i)
         end
-        for i = 1, 5 do
+        for i = 1, 10 do
             timer:cancel('rhook' .. i)
         end
-        for i = 1, 5 do
+        for i = 1, 10 do
             timer:cancel('rjab' .. i)
         end
-        for i = 1, 3 do
+        for i = 1, 10 do
             timer:cancel('dodgel' .. i)
         end
-        for i = 1, 3 do
+        for i = 1, 10 do
             timer:cancel('dodger' .. i)
         end
-        for i = 1, 3 do
+        for i = 1, 10 do
             timer:cancel('dodged' .. i)
         end
     end
@@ -195,7 +195,8 @@ function Player:update(dt)
             self.dodgeanimd(0.75, 'duck')
             timer:tween(0.375, self.y, {y=self.dy}, 'out-sine')
             timer:after(0.375, function() timer:tween(0.5, self.y, {y=self.sy}, 'in-sine') end, 'duck1')
-            timer:after(0.75, function() Input_lock = false self.dodge = false end, 'duck2')
+            timer:after(0.5, function() self.dodge = false end, 'duck5')
+            timer:after(0.75, function() Input_lock = false end, 'duck2')
         elseif input:pressed('left') or input:down('left') then
             print("dodgeleft")
             self.dodge = 'l'
@@ -203,7 +204,8 @@ function Player:update(dt)
             timer:after(0.25, function() timer:tween(0.5, self.x, {x=self.sx}, 'in-sine') end, 'dodgel1')
             self.dodgeaniml(0.7, 'dodgel')
             Input_lock = true
-            timer:after(0.7, function() Input_lock = false self.dodge = false end, 'dodgel2')
+            timer:after(0.5, function() self.dodge = false end, 'dodgel5')
+            timer:after(0.7, function() Input_lock = false end, 'dodgel2')
         elseif input:pressed('right') or input:down('right') then
             self.dodge = 'r'
             print('dodgeright')
@@ -211,7 +213,13 @@ function Player:update(dt)
             timer:after(0.25, function() timer:tween(0.5, self.x, {x=self.sx}, 'in-sine') end, 'dodger1')
             Input_lock = true
             self.dodgeanimr(0.7, 'dodger')
-            timer:after(0.7, function() Input_lock = false self.dodge = false end, 'dodger2')
+            timer:after(0.5, function() self.dodge = false end, 'dodger5')
+            timer:after(0.7, function() Input_lock = false end, 'dodger2')
+        end
+        if input:pressed('up') or input:down('up') then
+                self.block = true
+        else
+            self.block = false
         end
     end
 
@@ -220,12 +228,22 @@ function Player:update(dt)
         if collider_1.collision_class == 'Player' and collider_2.collision_class == 'EnemyPunch' then
             if collider_2.type == 'jab' then
                 if not self.dodge then
-                    print(collider_2.type .. collider_2.direction)
-                    gamestates.playerhp = gamestates.playerhp - collider_2.damage
-                    gamestates.starlevel = gamestates.starlevel - collider_2.damage
-                    gamestates.consecutivepunches = 0
-                    self.hitstun(1)
-                    timer:tween(0.5, self, {display_hp = gamestates.playerhp}, 'out-sine')
+                    if self.block == true and collider_2.block == 'up' then
+                        print('blocked')
+                    elseif self.block == false and collider_2.block == 'down' then
+                        print('blocked')
+                    else
+                        print(collider_2.type .. collider_2.direction)
+                        gamestates.playerhp = gamestates.playerhp - collider_2.damage
+                        gamestates.starlevel = gamestates.starlevel - collider_2.damage
+                        gamestates.consecutivepunches = 0
+                        self.hitstun(1)
+                        timer:tween(0.5, self, {display_hp = gamestates.playerhp}, 'out-sine')
+                        if collider_2.hcheck then
+                            phpulse = true
+                            print(phpulse)
+                        end
+                    end
                 end
             end
             if collider_2.type == 'hook' then
@@ -238,6 +256,10 @@ function Player:update(dt)
                     gamestates.consecutivepunches = 0
                     self.hitstun(1.5)
                     timer:tween(0.5, self, {display_hp = gamestates.playerhp}, 'out-sine')
+                    if collider_2.hcheck then
+                        phpulse = true
+                        print(phpulse)
+                    end
                 end
                 print(self.dodge, collider_2.direction)
             end
@@ -262,6 +284,7 @@ function Player:draw()
         love.graphics.rectangle('line', self.x.x-(self.w), self.y.y, self.w*2, self.h)
         love.graphics.print(tostring(Input_lock), -gw/2, -gh/2)
         love.graphics.print(tostring(self.dodge), -gw/2, -gh/2+20)
+        love.graphics.print(tostring(self.block), -gw/2+200, -gh/2+20)
         love.graphics.print(tostring(gamestates.playerhp), -gw/2, -gh/2+40)
         love.graphics.print(tostring(gamestates.timeelapsed), -gw/2, -gh/2+80)
         love.graphics.print(tostring(gamestates.starlevel), -gw/2, -gh/2+100)
