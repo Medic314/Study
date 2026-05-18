@@ -39,6 +39,7 @@ function Player:new(area, x, y, opts)
     self.blockcheck = 0
     self.blockcount = false
     self.stunned = false
+    self.blocktimer = 0
 
     local function cancelall()
         for i = 1, 10 do
@@ -144,13 +145,13 @@ function Player:update(dt)
             if input:down('up') then
                 print("lhook")
                 Input_lock = true
-                self.area:addGameObject('PlayerPunch', -50, -50, {type='lhook', damage = 20})
+                self.area:addGameObject('PlayerPunch', enemyx-50, enemyy-50, {type='lhook', damage = 20})
                 self.hookaniml(0.45-(gamestates.consecutivepunches/120), 'lhook')
                 timer:after(0.45-(gamestates.consecutivepunches/120), function() if not misspulse then Input_lock = false else self.missswitch = true end end, 'lhook1')
             else
                 print("ljab")
                 Input_lock = true
-                self.area:addGameObject('PlayerPunch', -50, 50, {type='ljab', damage = 22.5})
+                self.area:addGameObject('PlayerPunch', enemyx-50, enemyy+50, {type='ljab', damage = 22.5})
                 self.punchaniml(0.5, 'ljab')
                 timer:after(0.5, function() if not misspulse then Input_lock = false else self.missswitch = true end end, 'ljab1')
             end
@@ -159,13 +160,13 @@ function Player:update(dt)
                 if input:down('up') then
                     print("rhook")
                     Input_lock = true
-                    self.area:addGameObject('PlayerPunch', 50, -50, {type='rhook', damage = 25})
+                    self.area:addGameObject('PlayerPunch', enemyx+50, enemyy-50, {type='rhook', damage = 25})
                     self.hookanimr(0.5-(gamestates.consecutivepunches/120), 'rhook')
                     timer:after(0.5-(gamestates.consecutivepunches/120), function() if not misspulse then Input_lock = false else self.missswitch = true end end, 'rhook1')
                 else
                     print("rjab")
                     Input_lock = true
-                    self.area:addGameObject('PlayerPunch', 50, 50, {type='rjab', damage = 27.5})
+                    self.area:addGameObject('PlayerPunch', enemyx+50, enemyy+50, {type='rjab', damage = 27.5})
                     self.punchanimr(0.55-(gamestates.consecutivepunches/120), 'rjab')
                     timer:after(0.55-(gamestates.consecutivepunches/120), function() if not misspulse then Input_lock = false else self.missswitch = true end end, 'rjab1')
                 end
@@ -176,13 +177,13 @@ function Player:update(dt)
                 if input:down('up') then
                     print("shook")
                     Input_lock = true
-                    self.area:addGameObject('PlayerPunch', 50, -50, {type='rhook', damage = 125, sp=true})
+                    self.area:addGameObject('PlayerPunch', enemyx+50, enemyy-50, {type='rhook', damage = 125, sp=true})
                     self.hookanimr(1-(gamestates.consecutivepunches/40), 'rhook')
                     timer:after(1-(gamestates.consecutivepunches/40), function() if not misspulse then Input_lock = false else self.missswitch = true end end, 'rhook1')
                 else
                     print("sjab")
                     Input_lock = true
-                    self.area:addGameObject('PlayerPunch', 50, 50, {type='rjab', damage = 150, sp=true})
+                    self.area:addGameObject('PlayerPunch', enemyx+50, enemyy+50, {type='rjab', damage = 150, sp=true})
                     self.punchanimr(1.2-(gamestates.consecutivepunches/40), 'rjab')
                     timer:after(1.2-(gamestates.consecutivepunches/40), function() if not misspulse then Input_lock = false else self.missswitch = true end end, 'rjab1')
                 end
@@ -193,15 +194,15 @@ function Player:update(dt)
             Input_lock = true
             self.dodge = 'd'
             self.dodgeanimd(0.75, 'duck')
-            timer:tween(0.375, self.y, {y=self.dy}, 'out-sine')
-            timer:after(0.375, function() timer:tween(0.5, self.y, {y=self.sy}, 'in-sine') end, 'duck1')
+            timer:tween(0.375, self.y, {y=self.dy}, 'out-sine', 'duck7')
+            timer:after(0.375, function() timer:tween(0.5, self.y, {y=self.sy}, 'in-sine', 'duck6') end, 'duck1')
             timer:after(0.5, function() self.dodge = false end, 'duck5')
             timer:after(0.75, function() Input_lock = false end, 'duck2')
         elseif input:pressed('left') or input:down('left') then
             print("dodgeleft")
             self.dodge = 'l'
-            timer:tween(0.25, self.x, {x=self.lx}, 'out-sine')
-            timer:after(0.25, function() timer:tween(0.5, self.x, {x=self.sx}, 'in-sine') end, 'dodgel1')
+            timer:tween(0.25, self.x, {x=self.lx}, 'out-sine', 'dodgel6')
+            timer:after(0.25, function() timer:tween(0.5, self.x, {x=self.sx}, 'in-sine','dodgel7') end, 'dodgel1')
             self.dodgeaniml(0.7, 'dodgel')
             Input_lock = true
             timer:after(0.5, function() self.dodge = false end, 'dodgel5')
@@ -209,17 +210,23 @@ function Player:update(dt)
         elseif input:pressed('right') or input:down('right') then
             self.dodge = 'r'
             print('dodgeright')
-            timer:tween(0.25, self.x, {x=self.rx}, 'out-sine')
-            timer:after(0.25, function() timer:tween(0.5, self.x, {x=self.sx}, 'in-sine') end, 'dodger1')
+            timer:tween(0.25, self.x, {x=self.rx}, 'out-sine','dodger7')
+            timer:after(0.25, function() timer:tween(0.5, self.x, {x=self.sx}, 'in-sine','dodger6') end, 'dodger1')
             Input_lock = true
             self.dodgeanimr(0.7, 'dodger')
             timer:after(0.5, function() self.dodge = false end, 'dodger5')
             timer:after(0.7, function() Input_lock = false end, 'dodger2')
         end
         if input:pressed('up') or input:down('up') then
+            if self.blocktimer > 3 then
+                self.block = false
+            else
                 self.block = true
+            end
+            self.blocktimer = self.blocktimer + dt
         else
             self.block = false
+            self.blocktimer = 0
         end
     end
 
@@ -237,7 +244,12 @@ function Player:update(dt)
                         gamestates.playerhp = gamestates.playerhp - collider_2.damage
                         gamestates.starlevel = gamestates.starlevel - collider_2.damage
                         gamestates.consecutivepunches = 0
-                        self.hitstun(1)
+                        if gamestates.enemy == 'wreck' then
+                            self.hitstun(0.75)
+                        else
+                            self.hitstun(1.5)
+                        end
+                        
                         timer:tween(0.5, self, {display_hp = gamestates.playerhp}, 'out-sine')
                         if collider_2.hcheck then
                             phpulse = true
@@ -254,7 +266,8 @@ function Player:update(dt)
                     gamestates.playerhp = gamestates.playerhp - collider_2.damage
                     gamestates.starlevel = gamestates.starlevel - collider_2.damage
                     gamestates.consecutivepunches = 0
-                    self.hitstun(1.5)
+                    self.hitstun(2)
+                    
                     timer:tween(0.5, self, {display_hp = gamestates.playerhp}, 'out-sine')
                     if collider_2.hcheck then
                         phpulse = true

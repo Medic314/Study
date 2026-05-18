@@ -11,7 +11,7 @@ function FighterScreen:init()
     input:bind('z', 'z')
     self.image = ST['Portraits']
     self.IW, self.IH = 150, 200
-    self.max_frames = 2
+    self.max_frames = 4
     self.pframe = 1
     self.eframe = 2
     self.quads = {}
@@ -30,7 +30,11 @@ function FighterScreen:init()
     end
     if NextEnemy == 2 then
         gamestates = {timeelapsed = 0, starlevel = 0, max_starlevel = 100, roundstarted = false, playerstamina = 20, playerhp = 200, max_playerhp = 200, consecutivepunches = 0, enemy = 'pride'}
-        self.eframe = 2
+        self.eframe = 3
+    end
+    if NextEnemy == 3 then
+        gamestates = {timeelapsed = 0, starlevel = 0, max_starlevel = 100, roundstarted = false, playerstamina = 20, playerhp = 200, max_playerhp = 200, consecutivepunches = 0, enemy = 'wreck'}
+        self.eframe = 4
     end
 end
 

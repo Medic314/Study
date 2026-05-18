@@ -13,6 +13,7 @@ function Enemy:new(area, x, y, opts)
     self.collider:setObject(self)
     
     gamestates.round = 3
+
     if gamestates.enemy == 'sloth' then
         self.x = 0
         self.y = 100
@@ -44,6 +45,7 @@ function Enemy:new(area, x, y, opts)
         self.idleframe = 1
         self.idlebframe = 1
         self.hitanim = false
+        self.schmove = true
         timer:every(2, function() self.idleframe = 1 timer:after(1, function() self.idleframe = 2 end) end)
         self.scale = 1.5
         self.attackpats = 3
@@ -69,21 +71,61 @@ function Enemy:new(area, x, y, opts)
         self.maxguardtime = 7.5
         self.display_hp = self.maxhp
 
-        self.image = ST['SlothB']
-        self.legImage = ST['SlothL']
-        self.IW, self.IH = 200, 375
-        self.max_frames = 14
+        self.image = ST['Pride']
+        --self.legImage = ST['SlothL']
+        self.IW, self.IH = 400,400
+        self.max_frames = 10
         self.bframe = 1
-        self.lframe = 1
+        --self.lframe = 1
         self.quads = {}
-        self.lquads = {}
-        self.idleframe = 1
+        --self.lquads = {}
+        --self.idleframe = 1
         self.idlebframe = 1
         self.hitanim = false
-        timer:every(2, function() self.idleframe = 1 timer:after(1, function() self.idleframe = 2 end) end)
+        timer:every(2, function() if self.tauntc then self.bframe = 1 timer:after(0.125, function() self.bframe = 2 timer:after(0.125, function() self.bframe = 1 timer:after(0.125, function() self.bframe = 2 timer:after(0.125, function() self.bframe = 1 end) end) end) end) end end)
         self.scale = 1.5
         self.attackpats = 0
         self.tauntc = true
+    end
+    if gamestates.enemy == 'wreck' then
+        self.goagain = false
+        self.x = 0
+        self.y = 100
+        self.sx = 0
+        self.sy = 100
+        self.vx = {x=0}
+        self.vy = {y=100}
+        self.hp = 500
+
+        self.maxhp = self.hp
+        self.energy = 15
+        self.type = 'wreck'
+        self.currentguard = 1
+        self.guard = {'none'}
+        self.guardstances = {{'none'}, {'lhook', 'rhook'}, {'none'}, {'ljab', 'rjab'}, {'none'}, {'lhook', 'rhook'}, {'none'}, {'ljab', 'rjab'}, {'none'}, {'ljab', 'rjab'}, {'none'}, {'none'}, {'none'}}
+        self.specialblock = false
+        self.guardtime = 0
+        self.maxguardtime = 4
+        self.display_hp = self.maxhp
+
+        self.image = ST['Wreck']
+        --self.legImage = ST['SlothL']
+        self.IW, self.IH = 400,400
+        self.max_frames = 7
+        --self.lframe = 1
+        self.quads = {}
+        --self.lquads = {}
+        self.idleframe = 1
+        self.idlebframe = 2
+        self.bframe = self.idlebframe
+        self.hitanim = false
+        self.schmove = true
+        --timer:every(2, function() if self.tauntc then self.bframe = 1 timer:after(0.125, function() self.bframe = 2 timer:after(0.125, function() self.bframe = 1 timer:after(0.125, function() self.bframe = 2 timer:after(0.125, function() self.bframe = 1 end) end) end) end) end end)
+        timer:every(1/1.2, function() if self.schmove then self.idleframe = 2 timer:after(0.5/1.2, function() self.idleframe = 1 end) end end)
+        timer:every(2/1.2, function() if self.schmove then self.scale = 1.5 timer:after(1/1.2, function() self.scale = -1.5 end) end end)
+        self.scale = 1.5
+        self.attackpats = 0
+        --self.tauntc = true
     end
 
     local imgW, imgH = self.image:getDimensions()
@@ -112,6 +154,7 @@ function Enemy:new(area, x, y, opts)
     self.downtimer = 0
     self.instadowned = false
 
+    --#region Global Functions
     local function cancelall()
         local maxtimers = 10
 
@@ -122,13 +165,16 @@ function Enemy:new(area, x, y, opts)
             timer:cancel('hook' .. i)
         end
         for i=1, maxtimers do
+            timer:cancel('fhook' .. i)
+        end
+        for i=1, maxtimers do
             timer:cancel('pat1' .. i)
         end
         for i=1, maxtimers do
             timer:cancel('pat2' .. i)
         end
         for i=1, maxtimers do
-            timer:cancel('pat1' .. i)
+            timer:cancel('pat3' .. i)
         end
         for i=1, maxtimers do
             timer:cancel('sleep' .. i)
@@ -140,10 +186,27 @@ function Enemy:new(area, x, y, opts)
             timer:cancel('cpat' .. i)
         end
     end
+    local function minicancelall()
+        local maxtimers = 10
 
+        for i=1, maxtimers do
+            timer:cancel('jab' .. i)
+        end
+        for i=1, maxtimers do
+            timer:cancel('hook' .. i)
+        end
+        for i=1, maxtimers do
+            timer:cancel('fhook' .. i)
+        end
+    end
     local function stun(duration, frame)
         self.cancelall()
-        frame = frame or 7
+        if self.type == 'sloth' then
+            frame = frame or 7
+        end
+        if self.type == 'pride' then
+            frame = frame or 10
+        end
         self.bframe = frame
         self.attacking = false
         self.stunb = true
@@ -153,280 +216,479 @@ function Enemy:new(area, x, y, opts)
         end
         timer:after(duration, function() self.stunb = false self.attacking = true self.bframe = self.idlebframe timer:tween(0.25, camera, {scale = 1}, 'out-sine') timer:after(0.25, function() camera.scale = 1 end) end, 'stun1')
     end
+    --#endregion
 
-
-    local function sjab(speed, direction, block)
-        if direction == 'r' then
-            self.scale = 1.5
-        else
-            self.scale = -1.5
-        end
-        self.bframe = self.idlebframe
-        local blockc = block or 'up'
-        timer:after(((speed/6)+(speed/9)), function() self.bframe = 3 timer:after(speed/9, function() self.bframe = 12 timer:after((speed/3), function() self.bframe = 4 self.area:addGameObject('EnemyPunch', 0, 100, {type='jab', direction = direction, block=blockc}) timer:after((speed/25), function() self.bframe = self.idlebframe self.stuntype = 'jab' self.counterpunch = true timer:after((speed/3), function() self.bframe = self.idlebframe self.counterpunch = false end, 'jab5') end, 'jab4') end, 'jab3')  end, 'jab2') end, 'jab1')
-        timer:after(speed, function() self.scale = 1.5 self.lframe = self.idleframe end)
-    end
-    local function sspecial()
-        self.bframe = self.idlebframe
-        timer:after(0.60, function() self.guard = {} end, 'special2')
-        timer:tween(0.80, self.vx, {x=self.sx}, 'out-sine')
-        timer:tween(0.80, self.vy, {y=self.sy}, 'out-sine')
-        timer:after(0.95, function() self.block = {'ljab', 'rjab', 'lhook', 'rhook'} self.area:addGameObject('EnemyPunch', 0, 100, {type='hook', direction = 'l', damage=75}) end, 'special1')
-        timer:after(1.25, function() self.stage = 4 self.pat3() end, 'special3')
-    end
-    local function shook(speed, direction, block)
-        self.bframe = self.idlebframe
-        local blockc = block or 'none'
-        if direction == 'r' then
-            self.scale = 1.5
-            timer:after((speed/4), function() self.bframe = 5 self.x = 10 self.vy.y = 150 timer:after((speed/4), function() self.bframe = 6 self.vy.y = self.sy self.area:addGameObject('EnemyPunch', 0, 100, {type='hook', direction = direction, block=blockc, damage=35}) timer:after((0.1), function() self.bframe = 6 self.stuntype = 'hook' self.counterpunch = true self.x = 0 timer:after(speed/4, function() self.counterpunch = false self.bframe = self.idlebframe end, 'hook4') end, 'hook3') end, 'hook2') end, 'hook1')
-        else
-            self.scale = -1.5
-            timer:after((speed/2), function() self.bframe = 5 self.x = -10 self.vy.y = 150 timer:after((speed/4), function() self.bframe = 6 self.vy.y = self.sy-50 self.area:addGameObject('EnemyPunch', 0, 100, {type='hook', direction = direction, block=blockc, damage=35}) timer:after((0.1), function() self.vy.y = self.sy self.bframe = 6 self.stuntype = 'hook' self.counterpunch = true self.x = 0 timer:after(speed/4, function() self.counterpunch = false self.bframe = self.idlebframe end, 'hook4') end, 'hook3') end, 'hook2') end, 'hook1')
-        end
-        timer:after(speed, function() self.scale = 1.5 self.lframe = self.idleframe end)
-    end
-
-
-    local function spat1()
-        self.pattern = 'pat1'
-        self.attacking = false
-        print(self.pattern, self.stage)
-        if self.stage == 1 then
-            self.jab(1.5, 'l')
-        end
-        if self.stage == 2 then
-            self.jab(1.5, 'r')
-        end
-        if self.stage == 3 then
-            self.hook(3, 'l')
-        end
-        if self.stage == 4 then 
-            self.attacking = true 
-            self.attackpats = self.attackpats + 1
-            self.pattern = nil
-            self.stage = 0
-        end
-    end
-    local function spat2()
-        self.pattern = 'pat2'
-        self.attacking = false
-        print(self.pattern, self.stage)
-        if self.stage == 1 then
-            self.hook(3, 'l')
-        end
-        if self.stage == 2 then
-            self.hook(3, 'r')
-        end
-        if self.stage == 3 then
-            self.hook(3, 'l')
-        end
-        if self.stage == 4 then 
-            self.attacking = true 
-            self.attackpats = self.attackpats + 1
-            self.pattern = nil
-            self.stage = 0
-        end
-    end
-    local function spat3()
-        print(self.pattern, self.stage)
-        self.pattern = 'pat3'
-        self.attacking = false
-        if self.stage == 1 then
-            self.specialblock = true
-            self.guard = {'ljab', 'rjab', 'lhook', 'rhook'}
-            timer:tween(1, self.vy, {y=0}, 'out-sine')
-            timer:tween(1, self.vx, {x=50}, 'out-sine')
-        end
-        if self.stage == 2 then
-            timer:tween(2, self.vx, {x=-50}, 'out-sine')
-        end
-        if self.stage == 3 then
-            self.special()
-        end
-        if self.stage == 4 then 
-            self.attacking = true 
-            self.attackpats = self.attackpats + 1
-            self.pattern = nil
-            self.specialblock = false
-            self.stage = 0
-            self.attackpats = 0
-        end
-    end
-
-
-    local function pjab(speed, direction, block, hcheck)
-        local lhcheck = hcheck or false
-        local blockc = block or 'up'
-        if direction == 'r' then
-            self.scale = 1.5
-        else
-            self.scale = -1.5
-        end
-        self.bframe = self.idlebframe
-        timer:after(((speed/100)), function() self.bframe = 3 timer:after(speed/9, function() self.bframe = 12 timer:after((speed/3), function() self.bframe = 4 self.area:addGameObject('EnemyPunch', 0, 100, {type='jab', direction = direction, block=blockc, hcheck=lhcheck}) timer:after((speed/25), function() self.bframe = self.idlebframe self.stuntype = 'jab' self.counterpunch = true timer:after((speed/3), function() self.bframe = self.idlebframe self.counterpunch = false end, 'jab5') end, 'jab4') end, 'jab3')  end, 'jab2') end, 'jab1')
-        timer:after(speed, function() self.scale = 1.5 self.lframe = self.idleframe end)
-    end
-    local function pspecial()
-        self.bframe = self.idlebframe
-        timer:after(0.60, function() self.guard = {} end, 'special2')
-        timer:tween(0.80, self.vx, {x=self.sx}, 'out-sine')
-        timer:tween(0.80, self.vy, {y=self.sy}, 'out-sine')
-        timer:after(0.95, function() self.block = {'ljab', 'rjab', 'lhook', 'rhook'} self.area:addGameObject('EnemyPunch', 0, 100, {type='hook', direction = 'l', damage=75}) end, 'special1')
-        timer:after(1.25, function() self.stage = 4 self.pat3() end, 'special3')
-    end
-    local function phook(speed, direction, block, hcheck)
-        local lhcheck = hcheck or false
-        self.bframe = self.idlebframe
-        local blockc = block or 'none'
-        if direction == 'r' then
-            self.scale = 1.5
-            timer:after((speed/100), function() self.bframe = 5 self.x = 10 self.vy.y = 150 timer:after((speed/2), function() self.bframe = 6 self.vy.y = self.sy self.area:addGameObject('EnemyPunch', 0, 100, {type='hook', direction = direction, block=blockc, damage=35, hcheck=lhcheck}) timer:after((0.1), function() self.bframe = 6 self.stuntype = 'hook' self.counterpunch = true self.x = 0 timer:after(speed/8, function() self.counterpunch = false self.bframe = self.idlebframe end, 'hook4') end, 'hook3') end, 'hook2') end, 'hook1')
-        else
-            self.scale = -1.5
-            timer:after((speed/100), function() self.bframe = 5 self.x = -10 self.vy.y = 150 timer:after((speed/2), function() self.bframe = 6 self.vy.y = self.sy-50 self.area:addGameObject('EnemyPunch', 0, 100, {type='hook', direction = direction, block=blockc, damage=35, hcheck=lhcheck}) timer:after((0.1), function() self.vy.y = self.sy self.bframe = 6 self.stuntype = 'hook' self.counterpunch = true self.x = 0 timer:after(speed/8, function() self.counterpunch = false self.bframe = self.idlebframe end, 'hook4') end, 'hook3') end, 'hook2') end, 'hook1')
-        end
-        timer:after(speed, function() self.scale = 1.5 self.lframe = self.idleframe end)
-    end
-    local function pfhook(speed, direction, block, hcheck)
-        local lhcheck = hcheck or false
-        self.bframe = self.idlebframe
-        local blockc = block or 'none'
-        if direction == 'r' then
-            self.scale = -1.5
-            timer:after((speed/100), function() self.bframe = 5 self.x = -10 self.vy.y = 150 timer:after(speed/4, function() self.bframe = 12 timer:after(speed/12,function() self.bframe = 5 timer:after((speed/4), function() self.scale = 1.5 self.bframe = 6 self.vy.y = self.sy-50 self.area:addGameObject('EnemyPunch', 0, 100, {type='hook', direction = direction, block=blockc, damage=35, hcheck=lhcheck}) timer:after((0.1), function() self.vy.y = self.sy self.bframe = 6 self.stuntype = 'hook' self.counterpunch = true self.x = 0 timer:after(speed/8, function() self.counterpunch = false self.bframe = self.idlebframe end, 'fhook6') end, 'fhook5') end, 'fhook4') end, 'fhook3') end, 'fhook2') end, 'fhook1')
-        else
-            self.scale = 1.5
-            timer:after((speed/100), function() self.bframe = 5 self.x = -10 self.vy.y = 150 timer:after(speed/4, function() self.bframe = 12 timer:after(speed/12,function() self.bframe = 5 timer:after((speed/4), function() self.scale = -1.5 self.bframe = 6 self.vy.y = self.sy-50 self.area:addGameObject('EnemyPunch', 0, 100, {type='hook', direction = direction, block=blockc, damage=35, hcheck=lhcheck}) timer:after((0.1), function() self.vy.y = self.sy self.bframe = 6 self.stuntype = 'hook' self.counterpunch = true self.x = 0 timer:after(speed/8, function() self.counterpunch = false self.bframe = self.idlebframe end, 'fhook6') end, 'fhook5') end, 'fhook4') end, 'fhook3') end, 'fhook2') end, 'fhook1')
-        end
-        timer:after(speed, function() self.scale = 1.5 self.lframe = self.idleframe end)
-    end
-    local function ppat1()
-        self.pattern = 'pat1'
-        self.attacking = false
-        print(self.pattern, self.stage)
-        if self.stage == 1 then
-            self.guard = {'ljab', 'rjab'}
-            self.jab(1, 'l')
-        end
-        if self.stage == 2 then
-            self.guard = {'ljab', 'rjab'}
-            self.hook(1.5, 'r')
-        end
-        if self.stage == 3 then
-            self.guard = {'lhook', 'rhook'}
-            self.jab(1, 'r')
-        end
-        if self.stage == 4 then
-            self.guard = {'lhook', 'rhook'}
-            self.hook(1.5, 'l')
-        end
-        if self.stage == 5 then 
-            self.attacking = true 
-            self.attackpats = self.attackpats + 1
-            self.pattern = nil
-            self.stage = 0
-        end
-    end
-    local function ppat2()
-        self.pattern = 'pat2'
-        self.attacking = false
-        print(self.pattern, self.stage)
-        if self.stage == 1 then
-            self.guard = {'lhook', 'rhook'}
-            self.jab(1, 'l')
-        end
-        if self.stage == 2 then
-            self.guard = {'lhook', 'rhook'}
-            self.fhook(1.5, 'r')
-        end
-        if self.stage == 3 then
-            self.guard = {'lhook', 'rhook'}
-            self.fhook(1.5, 'l')
-        end
-        if self.stage == 4 then
-            self.guard = {'lhook', 'rhook'}
-            self.hook(1.5, 'l')
-        end
-        if self.stage == 5 then 
-            self.attacking = true
-            self.attackpats = self.attackpats + 1
-            self.pattern = nil
-            self.stage = 0
-        end
-    end
-    local function ppat3()
-        self.pattern = 'pat3'
-        self.attacking = false
-        print(self.pattern, self.stage)
-        if self.stage == 1 then
-            self.guard = {'ljab', 'rjab', 'lhook', 'rhook'}
-            self.jab(1, 'l')
-        end
-        if self.stage == 2 then
-            self.guard = {'ljab', 'rjab', 'lhook', 'rhook'}
-            self.jab(1, 'r')
-        end
-        if self.stage == 3 then
-            self.guard = {'ljab', 'lhook', 'rhook'}
-            self.jab(1, 'l')
-        end
-        if self.stage == 4 then
-            self.guard = {'rjab', 'lhook', 'rhook'}
-            self.fhook(1.5, 'r')
-        end
-        if self.stage == 5 then 
-            self.attacking = true 
-            self.attackpats = self.attackpats + 1
-            self.pattern = nil
-            self.stage = 0
-        end
-    end
-
-    local function ptaunt() 
-        self.guard = {'none'}
-        self.attacking = false
-        self.tauntc = true
-        self.pattern = nil
-        self.stage = 0
-        print('taunt')
-    end
-
-    local function pcounterpat(speed)
-        self.tauntc = false
-        self.gotem = false
-        self.attacking = false
-        self.pattern = nil
-        self.stage = 0
-        timer:after(0.5, function()
-        self.jab(speed/4, 'l', 'up', true)
-        timer:after(speed/4, function() self.jab(speed/4, 'r', 'up', true) timer:after(speed/2, function() self.hook(speed/2, 'l', 'none', true) end, 'cpat2') end, 'cpat1')
-        timer:after(speed*1.3, function() if self.goagain then self.goagain = false self.tauntc = true self.attacking = true else self.stun(4.5) timer:after(6, function() self.attacking = true self.stage = 0 end) end end, 'cpat5') end, 'cpat4')
-    end
-
+    --#region Sloth Attacks
     if self.type == 'sloth' then
+        local function sjab(speed, direction, block)
+            if direction == 'r' then
+                self.scale = 1.5
+            else
+                self.scale = -1.5
+            end
+            self.bframe = self.idlebframe
+            local blockc = block or 'up'
+            timer:after(((speed/6)+(speed/9)), function() self.bframe = 3 timer:after(speed/9, function() self.bframe = 12 timer:after((speed/3), function() self.bframe = 4 self.area:addGameObject('EnemyPunch', 0, 100, {type='jab', direction = direction, block=blockc}) timer:after((speed/25), function() self.bframe = self.idlebframe self.stuntype = 'jab' self.counterpunch = true timer:after((speed/3), function() self.bframe = self.idlebframe self.counterpunch = false end, 'jab5') end, 'jab4') end, 'jab3')  end, 'jab2') end, 'jab1')
+            timer:after(speed, function() self.scale = 1.5 if self.lframe then self.lframe = self.idlebframe end end)
+        end
+        local function sspecial()
+            self.bframe = self.idlebframe
+            timer:after(0.60, function() self.guard = {} end, 'special2')
+            timer:tween(0.80, self.vx, {x=self.sx}, 'out-sine')
+            timer:tween(0.80, self.vy, {y=self.sy}, 'out-sine')
+            timer:after(0.95, function() self.block = {'ljab', 'rjab', 'lhook', 'rhook'} self.area:addGameObject('EnemyPunch', 0, 100, {type='hook', direction = 'l', damage=75}) end, 'special1')
+            timer:after(1.25, function() self.stage = 4 self.pat3() end, 'special3')
+        end
+        local function shook(speed, direction, block)
+            self.bframe = self.idlebframe
+            local blockc = block or 'none'
+            if direction == 'r' then
+                self.scale = 1.5
+                timer:after((speed/4), function() self.bframe = 5 self.x = 10 self.vy.y = 150 timer:after((speed/4), function() self.bframe = 6 self.vy.y = self.sy self.area:addGameObject('EnemyPunch', 0, 100, {type='hook', direction = direction, block=blockc, damage=35}) timer:after((0.1), function() self.bframe = 6 self.stuntype = 'hook' self.counterpunch = true self.x = 0 timer:after(speed/4, function() self.counterpunch = false self.bframe = self.idlebframe end, 'hook4') end, 'hook3') end, 'hook2') end, 'hook1')
+            else
+                self.scale = -1.5
+                timer:after((speed/2), function() self.bframe = 5 self.x = -10 self.vy.y = 150 timer:after((speed/4), function() self.bframe = 6 self.vy.y = self.sy-50 self.area:addGameObject('EnemyPunch', 0, 100, {type='hook', direction = direction, block=blockc, damage=35}) timer:after((0.1), function() self.vy.y = self.sy self.bframe = 6 self.stuntype = 'hook' self.counterpunch = true self.x = 0 timer:after(speed/4, function() self.counterpunch = false self.bframe = self.idlebframe end, 'hook4') end, 'hook3') end, 'hook2') end, 'hook1')
+            end
+            timer:after(speed, function() self.scale = 1.5 if self.lframe then self.lframe = self.idlebframe end end)
+        end
+
+
+        local function spat1()
+            self.pattern = 'pat1'
+            self.attacking = false
+            print(self.pattern, self.stage)
+            if self.stage == 1 then
+                self.jab(1.5, 'l')
+            end
+            if self.stage == 2 then
+                self.jab(1.5, 'r')
+            end
+            if self.stage == 3 then
+                self.hook(3, 'l')
+            end
+            if self.stage == 4 then 
+                self.attacking = true 
+                self.attackpats = self.attackpats + 1
+                self.pattern = nil
+                self.stage = 0
+            end
+        end
+        local function spat2()
+            self.pattern = 'pat2'
+            self.attacking = false
+            print(self.pattern, self.stage)
+            if self.stage == 1 then
+                self.hook(3, 'l')
+            end
+            if self.stage == 2 then
+                self.hook(3, 'r')
+            end
+            if self.stage == 3 then
+                self.hook(3, 'l')
+            end
+            if self.stage == 4 then 
+                self.attacking = true 
+                self.attackpats = self.attackpats + 1
+                self.pattern = nil
+                self.stage = 0
+            end
+        end
+        local function spat3()
+            print(self.pattern, self.stage)
+            self.pattern = 'pat3'
+            self.attacking = false
+            if self.stage == 1 then
+                self.specialblock = true
+                self.guard = {'ljab', 'rjab', 'lhook', 'rhook'}
+                timer:tween(1, self.vy, {y=0}, 'out-sine')
+                timer:tween(1, self.vx, {x=50}, 'out-sine')
+            end
+            if self.stage == 2 then
+                timer:tween(2, self.vx, {x=-50}, 'out-sine')
+            end
+            if self.stage == 3 then
+                self.special()
+            end
+            if self.stage == 4 then 
+                self.attacking = true 
+                self.attackpats = self.attackpats + 1
+                self.pattern = nil
+                self.specialblock = false
+                self.stage = 0
+                self.attackpats = 0
+            end
+        end
+
         self.pat1 = spat1
         self.pat2 = spat2
         self.pat3 = spat3
-        self.cancelall = cancelall 
+        self.cancelall = cancelall
+        self.minicancelall = minicancelall
         self.stun = stun
         self.jab = sjab
         self.hook = shook
         self.special = sspecial
     end
+    --#endregion
+
+    --#region Pride Attacks
     if self.type == 'pride' then
+        local function pjab(speed, direction, block, hcheck)
+            local lhcheck = hcheck or false
+            local blockc = block or 'up'
+            self.minicancelall()
+            if direction == 'r' then
+                self.scale = 1.5
+            else
+                self.scale = -1.5
+            end
+            self.bframe = self.idlebframe
+            timer:after(((speed/100)), function() self.bframe = 5 timer:after(speed/9, function() self.bframe = 5 timer:after((speed/3), function() self.bframe = 6 self.area:addGameObject('EnemyPunch', 0, 100, {type='jab', direction = direction, block=blockc, hcheck=lhcheck}) timer:after((speed/25), function() self.bframe = self.idlebframe self.stuntype = 'jab' self.counterpunch = true timer:after((speed/3), function() self.bframe = self.idlebframe self.counterpunch = false end, 'jab5') end, 'jab4') end, 'jab3')  end, 'jab2') end, 'jab1')
+            timer:after(speed, function() self.scale = 1.5 if self.lframe then self.lframe = self.idlebframe end end)
+        end
+        local function pspecial()
+            self.bframe = self.idlebframe
+            timer:after(0.60, function() self.guard = {} end, 'special2')
+            timer:tween(0.80, self.vx, {x=self.sx}, 'out-sine')
+            timer:tween(0.80, self.vy, {y=self.sy}, 'out-sine')
+            timer:after(0.95, function() self.block = {'ljab', 'rjab', 'lhook', 'rhook'} self.area:addGameObject('EnemyPunch', 0, 100, {type='hook', direction = 'l', damage=75}) end, 'special1')
+            timer:after(1.25, function() self.stage = 4 self.pat3() end, 'special3')
+        end
+        local function phook(speed, direction, block, hcheck)
+            local lhcheck = hcheck or false
+            self.bframe = self.idlebframe
+            local blockc = block or 'none'
+            self.minicancelall()
+            if direction == 'r' then
+                self.scale = 1.5
+                timer:after((speed/100), function() self.bframe = 7 self.x = 10 self.vy.y = 150 timer:after((speed/2), function() self.bframe = 9 self.vy.y = self.sy self.area:addGameObject('EnemyPunch', 0, 100, {type='hook', direction = direction, block=blockc, damage=35, hcheck=lhcheck}) timer:after((0.1), function() self.bframe = 9 self.stuntype = 'hook' self.counterpunch = true self.x = 0 timer:after(speed/8, function() self.counterpunch = false self.bframe = self.idlebframe end, 'hook4') end, 'hook3') end, 'hook2') end, 'hook1')
+            else
+                self.scale = -1.5
+                timer:after((speed/100), function() self.bframe = 7 self.x = -10 self.vy.y = 150 timer:after((speed/2), function() self.bframe = 9 self.vy.y = self.sy-50 self.area:addGameObject('EnemyPunch', 0, 100, {type='hook', direction = direction, block=blockc, damage=35, hcheck=lhcheck}) timer:after((0.1), function() self.vy.y = self.sy self.bframe = 9 self.stuntype = 'hook' self.counterpunch = true self.x = 0 timer:after(speed/8, function() self.counterpunch = false self.bframe = self.idlebframe end, 'hook4') end, 'hook3') end, 'hook2') end, 'hook1')
+            end
+            timer:after(speed, function() self.scale = 1.5 if self.lframe then self.lframe = self.idlebframe end end)
+        end
+        local function pfhook(speed, direction, hcheck)
+            local lhcheck = hcheck or false
+            self.bframe = self.idlebframe
+            local blockc = 'none'
+            self.minicancelall()
+            if direction == 'r' then
+                self.scale = -1.5
+                timer:after((speed/100), function() self.bframe = 7 self.x = -10 self.vy.y = 150 timer:after(speed/4, function() self.bframe = 8 timer:after(speed/12,function() self.bframe = 7 timer:after((speed/4), function() self.scale = 1.5 self.bframe = 9  self.vy.y = self.sy-50 self.area:addGameObject('EnemyPunch', 0, 100, {type='hook', direction = direction, block=blockc, damage=45, hcheck=lhcheck}) timer:after((0.1), function() self.vy.y = self.sy self.bframe = 9 self.stuntype = 'hook' self.counterpunch = true self.x = 0 timer:after(speed/8, function() self.counterpunch = false self.bframe = self.idlebframe end, 'fhook6') end, 'fhook5') end, 'fhook4') end, 'fhook3') end, 'fhook2') end, 'fhook1')
+            else
+                self.scale = 1.5
+                timer:after((speed/100), function() self.bframe = 7 self.x = -10 self.vy.y = 150 timer:after(speed/4, function() self.bframe = 8 timer:after(speed/12,function() self.bframe = 7 timer:after((speed/4), function() self.scale = -1.5 self.bframe = 9 self.vy.y = self.sy-50 self.area:addGameObject('EnemyPunch', 0, 100, {type='hook', direction = direction, block=blockc, damage=45, hcheck=lhcheck}) timer:after((0.1), function() self.vy.y = self.sy self.bframe = 9 self.stuntype = 'hook' self.counterpunch = true self.x = 0 timer:after(speed/8, function() self.counterpunch = false self.bframe = self.idlebframe end, 'fhook6') end, 'fhook5') end, 'fhook4') end, 'fhook3') end, 'fhook2') end, 'fhook1')
+            end
+            timer:after(speed, function() self.scale = 1.5 if self.lframe then self.lframe = self.idlebframe end end)
+        end
+        
+        local function ppat1()
+            self.pattern = 'pat1'
+            self.attacking = false
+            print(self.pattern, self.stage)
+            if self.stage == 1 then
+                self.guard = {'lhook', 'rhook'}
+                self.jab(1.2, 'l')
+            end
+            if self.stage == 2 then
+                self.guard = {'lhook', 'rhook'}
+                self.hook(1.65, 'r')
+            end
+            if self.stage == 3 then
+                self.guard = {'ljab', 'rjab'}
+                self.jab(1.2, 'r')
+            end
+            if self.stage == 4 then
+                self.guard = {'ljab', 'rjab'}
+                self.hook(1.65, 'l')
+            end
+            if self.stage == 5 then 
+                self.attacking = true 
+                self.attackpats = self.attackpats + 1
+                self.pattern = nil
+                self.stage = 0
+            end
+        end
+        local function ppat2()
+            self.pattern = 'pat2'
+            self.attacking = false
+            print(self.pattern, self.stage)
+            if self.stage == 1 then
+                self.guard = {'lhook', 'rhook'}
+                self.jab(1.2, 'l')
+            end
+            if self.stage == 2 then
+                self.guard = {'lhook', 'rhook'}
+                self.fhook(1.65, 'r')
+            end
+            if self.stage == 3 then
+                self.guard = {'lhook', 'rhook'}
+                self.fhook(1.65, 'l')
+            end
+            if self.stage == 4 then
+                self.guard = {'lhook', 'rhook'}
+                self.hook(1.65, 'l')
+            end
+            if self.stage == 5 then 
+                self.attacking = true
+                self.attackpats = self.attackpats + 1
+                self.pattern = nil
+                self.stage = 0
+            end
+        end
+        local function ppat3()
+            self.pattern = 'pat3'
+            self.attacking = false
+            print(self.pattern, self.stage)
+            if self.stage == 1 then
+                self.guard = {'ljab', 'rjab', 'lhook', 'rhook'}
+                self.jab(1.2, 'l')
+            end
+            if self.stage == 2 then
+                self.guard = {'ljab', 'rjab', 'lhook', 'rhook'}
+                self.jab(1.2, 'r')
+            end
+            if self.stage == 3 then
+                self.guard = {'ljab', 'lhook', 'rhook'}
+                self.jab(1.2, 'l')
+            end
+            if self.stage == 4 then
+                self.guard = {'rjab', 'lhook', 'rhook'}
+                self.fhook(1.65, 'r')
+            end
+            if self.stage == 5 then 
+                self.attacking = true 
+                self.attackpats = self.attackpats + 1
+                self.pattern = nil
+                self.stage = 0
+            end
+        end
+
+        local function ptaunt() 
+            self.guard = {'none'}
+            self.attacking = false
+            self.tauntc = true
+            self.pattern = nil
+            self.stage = 0
+            print('taunt')
+        end
+
+        local function pcounterpat(speed)
+            self.tauntc = false
+            self.gotem = false
+            self.attacking = false
+            self.pattern = nil
+            self.stage = 0
+            timer:after(0.5, function()
+            self.jab(speed/4, 'l', 'up', true)
+            timer:after(speed/4, function() self.jab(speed/4, 'r', 'up', true) timer:after(speed/2, function() self.hook(speed/2, 'l','none', true) end, 'cpat2') end, 'cpat1')
+            timer:after(speed*1.3, function() if self.goagain then self.goagain = false self.tauntc = true self.attacking = true else self.guard = {'none'} self.stun(6) timer:after(6, function() self.attacking = true self.stage = 0 end) end end, 'cpat5') end, 'cpat4')
+        end
         self.taunt = ptaunt
         self.cpat = pcounterpat
         self.fhook = pfhook
         self.pat1 = ppat1
         self.pat2 = ppat2
         self.pat3 = ppat3
-        self.cancelall = cancelall 
+        self.cancelall = cancelall
+        self.minicancelall = minicancelall
         self.stun = stun
         self.jab = pjab
         self.hook = phook
         self.special = pspecial
     end
+    --#endregion
+    
+    --#region Wreck Attacks
+    if self.type == 'wreck' then
+        local function hop(num, d)
+            for i=1, num do
+                timer:after(0.45*i, function()
+                    if d == 'r' then
+                        timer:tween(0.4, self.vx, {x=self.vx.x+150}, 'out-sine')
+                    else
+                        timer:tween(0.4, self.vx, {x=self.vx.x-150}, 'out-sine')
+                    end
+                    timer:tween(0.2, self.vy, {y=5}, 'out-sine')
+                    timer:after(0.2, function() timer:tween(0.25, self.vy, {y=self.sy}, 'out-sine') end)
+                end)
+            end
+        end
+        local function wjab(speed, direction, block, hcheck)
+            local blockc = block or 'up'
+            local lhcheck = hcheck or false
+            self.minicancelall()
+            if direction == 'r' then
+                self.scale = 1.5
+            else
+                self.scale = -1.5
+            end
+            self.bframe = self.idlebframe
+            timer:after(((speed/100)), function() self.bframe = self.idlebframe timer:after(speed/9, function() self.bframe = 5 timer:after((speed/3), function() self.bframe = 5 self.area:addGameObject('EnemyPunch', 0, 100, {type='jab', direction = direction, block=blockc, hcheck=lhcheck, damage=15}) timer:after((speed/25), function() self.bframe = 5 self.stuntype = 'jab' self.counterpunch = true timer:after((speed/3), function() self.bframe = self.idlebframe self.counterpunch = false end, 'jab5') end, 'jab4') end, 'jab3')  end, 'jab2') end, 'jab1')
+            timer:after(speed, function() self.scale = 1.5 if self.lframe then self.lframe = self.idlebframe end end)
+        end
+        local function wtell(speed)
+            self.minicancelall()
+            self.bframe = self.idlebframe
+            self.schmove = false
+            timer:after(speed/4, function() self.bframe = 2 timer:after(speed/4, function() self.bframe = 3 timer:after(speed/4, function() self.bframe = 2 timer:after(speed/4, function() self.bframe = 3 end) end) end) end)
+            timer:after(speed, function() self.scale = 1.5 if self.lframe then self.lframe = self.idlebframe end end)
+        end
+        local function wspecial()
+            self.bframe = self.idlebframe
+            timer:after(0.60, function() self.guard = {} end, 'special2')
+            timer:tween(0.80, self.vx, {x=self.sx}, 'out-sine')
+            timer:tween(0.80, self.vy, {y=self.sy}, 'out-sine')
+            timer:after(0.95, function() self.block = {'ljab', 'rjab', 'lhook', 'rhook'} self.area:addGameObject('EnemyPunch', 0, 100, {type='hook', direction = 'l', damage=75}) end, 'special1')
+            timer:after(1.25, function() self.stage = 4 self.pat3() end, 'special3')
+        end
+        local function whook(speed, direction, block, hcheck)
+            local lhcheck = hcheck or false
+            self.schmove = false
+            self.bframe = self.idlebframe
+            local blockc = block or 'none'
+            self.specialblock = true
+            self.block = {'rhook', 'lhook', 'rjab', 'ljab'}
+            self.guard = {'rhook', 'lhook', 'rjab', 'ljab'}
+            self.minicancelall()
+            if direction == 'r' then
+                self.scale = 1.5
+                timer:after(speed/100, function() hop(3, direction) timer:after(1.5, function() timer:after(speed/2, function()  self.bframe = 6  timer:tween(speed/2, self.vx, {x=(self.sx-150)}, 'out-sine', 'hook7') self.guard = {} timer:after(((speed/2)/3)*2, function() self.area:addGameObject('EnemyPunch', 0, 100, {type='hook', direction = direction, block=blockc, damage=35, hcheck=lhcheck}) timer:after(((speed/2)/3)*2, function() self.specialblock = false self.guard = {} self.bframe = self.idlebframe self.hop(1, direction) end, 'hook5') end, 'hook4') end, 'hook3') end, 'hook2') end, 'hook1')
+            else
+                self.scale = -1.5
+                timer:after(speed/100, function() hop(3, direction) timer:after(1.5, function() timer:after(speed/2, function() self.bframe = 6 timer:tween(speed/2, self.vx, {x=(self.sx+150)}, 'out-sine', 'hook7') self.guard = {} timer:after(((speed/2)/3)*2, function() self.area:addGameObject('EnemyPunch', 0, 100, {type='hook', direction = direction, block=blockc, damage=35, hcheck=lhcheck}) timer:after(((speed/2)/3)*2, function() self.specialblock = false self.guard = {} self.bframe = self.idlebframe self.hop(1, direction) end, 'hook5') end, 'hook4') end, 'hook3') end, 'hook2') end, 'hook1')
+            end
+            timer:after(speed+1.5, function() self.scale = 1.5 if self.lframe then self.lframe = self.idlebframe end end)
+        end
+        
+        local function wpat1()
+            self.pattern = 'pat1'
+            self.attacking = false
+            self.schmove = false
+            print(self.pattern, self.stage)
+            if self.stage == 1 then
+                self.tell(0.5)
+            end
+            if self.stage == 2 then
+                self.jab(0.65, 'r', 'up')
+            end
+            if self.stage == 3 then
+                self.jab(0.65, 'l', 'up')
+            end
+            if self.stage == 4 then
+                self.jab(0.65, 'r', 'down')
+            end
+            if self.stage == 5 then
+                self.jab(0.65, 'l', 'down')
+            end
+            if self.stage == 6 then 
+                self.attacking = true 
+                self.attackpats = self.attackpats + 1
+                self.pattern = nil
+                self.stage = 0
+                self.schmove = true
+            end
+        end
+        local function wpat2()
+            self.pattern = 'pat2'
+            self.attacking = false
+            self.schmove = false
+            print(self.pattern, self.stage)
+            if self.stage == 1 then
+                self.tell(0.5)
+            end
+            if self.stage == 2 then
+                self.jab(0.65, 'r', 'up')
+            end
+            if self.stage == 3 then
+                self.jab(0.65, 'l', 'up')
+            end
+            if self.stage == 4 then
+                self.tell(0.5)
+            end
+            if self.stage == 5 then
+                self.hook(0.5, 'l')
+            end
+            if self.stage == 6 then 
+                self.attacking = true 
+                self.attackpats = self.attackpats + 1
+                self.pattern = nil
+                self.stage = 0
+                self.schmove = true
+            end
+        end
+        local function wpat3()
+            self.pattern = 'pat3'
+            self.attacking = false
+            self.schmove = false
+            print(self.pattern, self.stage)
+            if self.stage == 1 then
+                self.jab(0.65, 'r', 'up')
+            end
+            if self.stage == 2 then
+                self.jab(0.65, 'l', 'up')
+            end
+            if self.stage == 3 then
+                self.jab(0.65, 'r', 'down')
+            end
+            if self.stage == 4 then
+                self.hook(0.5, 'l')
+            end
+            if self.stage == 5 then
+                self.tell(0.5)
+            end
+            if self.stage == 6 then 
+                self.attacking = true 
+                self.attackpats = self.attackpats + 1
+                self.pattern = nil
+                self.stage = 0
+                self.schmove = true
+            end
+        end
+        local function wpat4()
+            self.pattern = 'pat4'
+            self.attacking = false
+            self.schmove = false
+            print(self.pattern, self.stage)
+            if self.stage == 1 then
+                self.tell(0.5)
+            end
+            if self.stage == 2 then
+                self.hook(0.5, 'r')
+            end
+            if self.stage == 3 then
+                self.hook(0.5, 'l')
+            end
+            if self.stage == 4 then
+                self.tell(0.5)
+            end
+            if self.stage == 5 then
+                self.hook(0.5, 'l')
+            end
+            if self.stage == 6 then 
+                self.attacking = true 
+                self.attackpats = self.attackpats + 1
+                self.pattern = nil
+                self.stage = 0
+                self.schmove = true
+            end
+        end
+
+        self.pat1 = wpat1
+        self.pat2 = wpat2
+        self.pat3 = wpat3
+        self.pat4 = wpat4
+        self.cancelall = cancelall
+        self.minicancelall = minicancelall
+        self.stun = stun
+        self.jab = wjab
+        self.hook = whook
+        self.tell = wtell
+        self.hop = hop
+        self.special = wspecial
+    end
+    --#endregion
 end
 
 function Enemy:update(dt)
@@ -566,13 +828,13 @@ function Enemy:update(dt)
                                     self.pat3()
                                 end
                                 if self.stage == 1 then
-                                    timer:after(1.5, function() self.stage = 2 self.pat3() timer:after(1.5, function() self.stage = 3 self.pat3() timer:after(1.5, function() self.stage = 4 self.pat3()  timer:after(3, function() self.stage = 5 self.pat3()  end, 'pat34') end, 'pat33') end, 'pat32') end, 'pat31')
+                                    timer:after(1.25, function() self.stage = 2 self.pat3() timer:after(1.25, function() self.stage = 3 self.pat3() timer:after(1.25, function() self.stage = 4 self.pat3()  timer:after(3, function() self.stage = 5 self.pat3()  end, 'pat34') end, 'pat33') end, 'pat32') end, 'pat31')
                                 end
                                 if self.stage == 2 then
-                                    timer:after(2, function() self.stage = 3 self.pat3() timer:after(1.5, function() self.stage = 4 self.pat3() timer:after(3, function() self.stage = 5 self.pat3()  end, 'pat34') end, 'pat33') end, 'pat32')
+                                    timer:after(1.5, function() self.stage = 3 self.pat3() timer:after(1.25, function() self.stage = 4 self.pat3() timer:after(3, function() self.stage = 5 self.pat3()  end, 'pat34') end, 'pat33') end, 'pat32')
                                 end
                                 if self.stage == 3 then
-                                    timer:after(2, function() self.stage = 4 self.pat3() timer:after(3, function() self.stage = 5 self.pat3()  end, 'pat34') end, 'pat33')
+                                    timer:after(1.5, function() self.stage = 4 self.pat3() timer:after(3, function() self.stage = 5 self.pat3()  end, 'pat34') end, 'pat33')
                                 end
                                 if self.stage == 4 then
                                     timer:after(3, function() self.stage = 5 self.pat3()  end, 'pat34')
@@ -592,48 +854,219 @@ function Enemy:update(dt)
                 end
             end
         end
-    end
 
-    if not self.specialblock then
-        for i=1, #self.guard do
-            if self.guard[i] == 'rhook' or self.guard[i] == 'lhook' then
-                self.idlebframe = 2
-            elseif self.guard[i] == 'rjab' or self.guard[i] == 'ljab' then
-                self.idlebframe = 13
-            else
-                self.idlebframe = 1
+        if self.type == 'wreck' then
+            if gamestates.timeelapsed > 2 then
+                if self.attacking then
+                    if self.attackpats < 2 then
+                        if not self.pattern then
+                            local randompercent = random(0, 100)
+                            print(randompercent)
+                            if randompercent >= 0 and randompercent <= 25 then
+                                self.pattern = 'pat1'
+                            elseif randompercent >= 25 and randompercent <= 50 then
+                                self.pattern = 'pat2'
+                            elseif randompercent >= 50 and randompercent <= 75 then
+                                self.pattern = 'pat3'
+                            else
+                                self.pattern = 'pat4'
+                            end
+                        end
+                        if self.pattern == 'pat1' then
+                            self.attacking = false
+                            if self.stage == 0 then
+                                self.stage = 1
+                                self.pat1()
+                            end
+                            if self.stage == 1 then
+                                timer:after(0.75, function() self.stage = 2 self.pat1() timer:after(0.75, function() self.stage = 3 self.pat1() timer:after(0.75, function() self.stage = 4 self.pat1()  timer:after(0.75, function() self.stage = 5 self.pat1() timer:after(2, function() self.stage = 6 self.pat1()  end, 'pat15') end, 'pat14') end, 'pat13') end, 'pat12') end, 'pat11')
+                            end
+                            if self.stage == 2 then
+                                timer:after(0.75, function() self.stage = 3 self.pat1() timer:after(0.75, function() self.stage = 4 self.pat1() timer:after(0.75, function() self.stage = 5 self.pat1() timer:after(2, function() self.stage = 6 self.pat1()  end, 'pat15') end, 'pat14') end, 'pat13') end, 'pat12')
+                            end
+                            if self.stage == 3 then
+                                timer:after(0.75, function() self.stage = 4 self.pat1() timer:after(0.75, function() self.stage = 5 self.pat1()  end, 'pat14') end, 'pat13')
+                            end
+                            if self.stage == 4 then
+                                timer:after(0.75, function() self.stage = 5 self.pat1() timer:after(2, function() self.stage = 6 self.pat1()  end, 'pat15') end, 'pat14')
+                            end
+                            if self.stage == 5 then
+                                timer:after(2, function() self.stage = 6 self.pat1()  end, 'pat15')
+                            end
+                        elseif self.pattern == 'pat2' then
+                            self.attacking = false
+                            if self.stage == 0 then
+                                self.stage = 1
+                                self.pat2()
+                            end
+                            if self.stage == 1 then
+                                timer:after(0.75, function() self.stage = 2 self.pat2() timer:after(0.75, function() self.stage = 3 self.pat2() timer:after(0.75, function() self.stage = 4 self.pat2()  timer:after(0.75, function() self.stage = 5 self.pat2() timer:after(2.5, function() self.stage = 6 self.pat2()  end, 'pat25') end, 'pat24') end, 'pat23') end, 'pat22') end, 'pat21')
+                            end
+                            if self.stage == 2 then
+                                timer:after(0.75, function() self.stage = 3 self.pat2() timer:after(0.75, function() self.stage = 4 self.pat2() timer:after(0.75, function() self.stage = 5 self.pat2() timer:after(2.5, function() self.stage = 6 self.pat2()  end, 'pat25') end, 'pat24') end, 'pat23') end, 'pat22')
+                            end
+                            if self.stage == 3 then
+                                timer:after(0.75, function() self.stage = 4 self.pat2() timer:after(0.75, function() self.stage = 5 self.pat2()  end, 'pat24') end, 'pat23')
+                            end
+                            if self.stage == 4 then
+                                timer:after(0.75, function() self.stage = 5 self.pat2() timer:after(2.5, function() self.stage = 6 self.pat2()  end, 'pat25') end, 'pat24')
+                            end
+                            if self.stage == 5 then
+                                timer:after(2.5, function() self.stage = 6 self.pat2()  end, 'pat25')
+                            end
+                        elseif self.pattern == 'pat3' then
+                            self.attacking = false
+                            if self.stage == 0 then
+                                self.stage = 1
+                                self.pat2()
+                            end
+                            if self.stage == 1 then
+                                timer:after(0.75, function() self.stage = 2 self.pat2() timer:after(0.75, function() self.stage = 3 self.pat2() timer:after(0.75, function() self.stage = 4 self.pat2()  timer:after(2.5, function() self.stage = 5 self.pat2() timer:after(0.75, function() self.stage = 6 self.pat2()  end, 'pat25') end, 'pat24') end, 'pat23') end, 'pat22') end, 'pat21')
+                            end
+                            if self.stage == 2 then
+                                timer:after(0.75, function() self.stage = 3 self.pat2() timer:after(0.75, function() self.stage = 4 self.pat2() timer:after(2.5, function() self.stage = 5 self.pat2() timer:after(0.75, function() self.stage = 6 self.pat2()  end, 'pat25') end, 'pat24') end, 'pat23') end, 'pat22')
+                            end
+                            if self.stage == 3 then
+                                timer:after(0.75, function() self.stage = 4 self.pat2() timer:after(2.5, function() self.stage = 5 self.pat2()  end, 'pat24') end, 'pat23')
+                            end
+                            if self.stage == 4 then
+                                timer:after(2.5, function() self.stage = 5 self.pat2() timer:after(0.75, function() self.stage = 6 self.pat2()  end, 'pat25') end, 'pat24')
+                            end
+                            if self.stage == 5 then
+                                timer:after(0.75, function() self.stage = 6 self.pat2()  end, 'pat25')
+                            end
+                        else
+                            self.attacking = false
+                            if self.stage == 0 then
+                                self.stage = 1
+                                self.pat2()
+                            end
+                            if self.stage == 1 then
+                                timer:after(0.75, function() self.stage = 2 self.pat2() timer:after(2.5, function() self.stage = 3 self.pat2() timer:after(2.5, function() self.stage = 4 self.pat2()  timer:after(0.75, function() self.stage = 5 self.pat2() timer:after(2.5, function() self.stage = 6 self.pat2()  end, 'pat25') end, 'pat24') end, 'pat23') end, 'pat22') end, 'pat21')
+                            end
+                            if self.stage == 2 then
+                                timer:after(2.5, function() self.stage = 3 self.pat2() timer:after(2.5, function() self.stage = 4 self.pat2() timer:after(0.75, function() self.stage = 5 self.pat2() timer:after(2.5, function() self.stage = 6 self.pat2()  end, 'pat25') end, 'pat24') end, 'pat23') end, 'pat22')
+                            end
+                            if self.stage == 3 then
+                                timer:after(2.5, function() self.stage = 4 self.pat2() timer:after(0.75, function() self.stage = 5 self.pat2()  end, 'pat24') end, 'pat23')
+                            end
+                            if self.stage == 4 then
+                                timer:after(2.5, function() self.stage = 5 self.pat2() timer:after(2.5, function() self.stage = 6 self.pat2()  end, 'pat25') end, 'pat24')
+                            end
+                            if self.stage == 5 then
+                                timer:after(2.5, function() self.stage = 6 self.pat2()  end, 'pat25')
+                            end
+                        end
+                    else
+                        self.attacking = false
+                        print('special')
+                        self.attackpats = 0
+                        timer:after(3, function() self.attacking = true self.pattern = nil end)
+                    end
+                end
             end
         end
     end
 
-    if self.lframe == 1 or self.lframe == 2 then
-        self.lframe = self.idleframe
+    --#region idleframes
+    if not self.specialblock then
+        for i=1, #self.guard do
+            if self.guard[i] == 'rhook' or self.guard[i] == 'lhook' then
+                if self.type == 'sloth' then
+                    self.idlebframe = 2
+                end
+                if self.type == 'pride' then
+                    self.idlebframe = 3
+                end
+                if self.type == 'wreck' then
+                    if self.schmove then
+                        self.idlebframe = 3
+                    end
+                end
+            elseif self.guard[i] == 'rjab' or self.guard[i] == 'ljab' then
+                if self.type == 'sloth' then
+                    self.idlebframe = 13
+                end
+                if self.type == 'pride' then
+                    self.idlebframe = 4
+                end
+                if self.type == 'wreck' then
+                    if self.schmove then
+                        self.idlebframe = 4
+                    end
+                end
+            else
+                if self.type == 'wreck' then
+                    if self.schmove then
+                        self.idlebframe = self.idleframe
+                    end
+                else
+                    self.idlebframe = 1
+                end
+            end
+        end
     end
-    if self.bframe == 1 or self.bframe == 2 or self.bframe == 13 then
-        self.bframe = self.idlebframe
+    if self.type == 'wreck' or self.type == 'sloth' then
+        if self.schmove then
+            if self.bframe == 1 or self.bframe == 2 or self.bframe == 13 then
+                self.bframe = self.idlebframe
+            end
+        end
+    end
+    --endregion
+
+    --idle frames 2
+    if self.legImage then
+        if self.lframe == 1 or self.lframe == 2 then
+            self.lframe = self.idleframe
+        end
+
+        if self.bframe == 2 then
+            --self.lframe = 2
+        elseif self.bframe == 5 then
+            self.lframe = 3
+        elseif self.bframe == 6 then
+            self.lframe = 4
+        elseif self.bframe == 12 or self.bframe == 14 then
+            self.lframe = 5
+        else
+            --self.lframe = 1
+        end
     end
 
-    if self.bframe == 2 then
-        --self.lframe = 2
-    elseif self.bframe == 5 then
-        self.lframe = 3
-    elseif self.bframe == 6 then
-        self.lframe = 4
-    elseif self.bframe == 12 or self.bframe == 14 then
-        self.lframe = 5
-    else
-        --self.lframe = 1
-    end
-
+    --#region hitanims
     if self.hitanim then
-        self.bframe = 14
+        if self.type == 'sloth' then
+            self.bframe = 14
+        elseif self.type == 'pride' then
+            self.bframe = 10
+        elseif self.type == 'wreck' then
+            self.bframe = 7
+        end
     end
-    if not self.hitanim and self.bframe == 14 then
-        self.bframe = self.idlebframe
+    if self.type == 'sloth' then
+        if not self.hitanim and self.bframe == 14 then
+            if not self.lastframe then self.lastframe = self.idlebframe end
+            self.bframe = self.lastframe
+        end
     end
+    if self.type == 'pride' then
+        if not self.hitanim and self.bframe == 10 then
+            if not self.lastframe then self.lastframe = self.idlebframe end
+            self.bframe = self.lastframe
+        end
+    end
+    if self.type == 'wreck' then
+        if not self.hitanim and self.bframe == 7 then
+            if not self.lastframe then self.lastframe = self.idlebframe end
+            self.bframe = self.lastframe
+        end
+    end
+    --#endregion
 
     self.x, self.y = self.vx.x, self.vy.y
 
+    --blocks
     if not self.specialblock then
         if not self.stunb then
             self.guardtime = self.guardtime + dt
@@ -645,11 +1078,12 @@ function Enemy:update(dt)
         if self.currentguard > #self.guardstances then
             self.currentguard = 1
         end
-        if not self.type == 'pride' then
+        if self.type == 'wreck' or self.type == 'sloth' then
             self.guard = self.guardstances[self.currentguard]
         end
     end
 
+    --#region whenhit
     self.collider:setPosition(self.x, self.y)
     self.collider:setPreSolve(function(collider_1, collider_2, contact)
         contact:setEnabled(false)
@@ -661,6 +1095,7 @@ function Enemy:update(dt)
                     self.guardtime = self.guardtime - 2
                     print('blocked')
                     
+                    if self.type =='sloth' then
                         if not self.specialblock then
                             if self.bframe == 1 or self.bframe == 2 or self.bframe == 4 or self.bframe == 6 or self.bframe == 8 or self.bframe == 9 or self.bframe == 10 or self.bframe == 11 then
                                     if collider_2.type == 'lhook' then
@@ -676,16 +1111,18 @@ function Enemy:update(dt)
                                         self.bframe = 11
                                     end
                             end
-                        timer:after(0.2, function() if self.bframe == 8 or self.bframe == 9 or self.bframe == 10 or self.bframe == 11 then self.bframe = self.idlebframe end end)
-                    else
-                        misspulse = true
-                    end
+                            timer:after(0.2, function() if self.bframe == 8 or self.bframe == 9 or self.bframe == 10 or self.bframe == 11 then self.bframe = self.idlebframe end end)
+                        else
+                            misspulse = true
+                        end
+
                         if self.stunb then
                             self.cancelall()
                             self.stunb = false
                             self.attacking = true
                         end
-                    gamestates.consecutivepunches = 0
+                        gamestates.consecutivepunches = 0
+                    end
                 end
             end
             if not blocked then
@@ -711,6 +1148,7 @@ function Enemy:update(dt)
                     gamestates.playerhp = gamestates.playerhp + collider_2.damage / 10
                     gamestates.consecutivepunches = gamestates.consecutivepunches + 1
                     self.hitanim = true
+                    self.lastframe = self.bframe
                     timer:after(0.15, function() self.hitanim = false end)
                     if self.specialblock then self.hp = self.hp - self.hp self.instadowned = true self.cancelall() self.attacking = true 
                 self.attackpats = self.attackpats + 1
@@ -724,7 +1162,9 @@ function Enemy:update(dt)
             end
         end
     end)
+    --endregion
 
+    --downed
     if self.hp <= 0 then
         self.downtimer = 0
         gamestates.round = gamestates.round - 1
@@ -820,6 +1260,7 @@ function Enemy:update(dt)
             self.attackpats = 0 self.downed = false  self.downtimer = 0 self.cancelall() end)
         end
     end
+
     enemyx, enemyy = self.x, self.y
 end
 
@@ -830,13 +1271,17 @@ function Enemy:draw()
     if self.legImage then
         love.graphics.draw(self.legImage, self.lquads[self.lframe], self.x, self.y, 0, self.scale, 1.5, self.IW/2, self.IH/2)
     end
-    love.graphics.draw(self.image, self.quads[self.bframe], self.x, self.y, 0, self.scale, 1.5, self.IW/2, self.IH/2)
+    if self.type == 'sloth' or self.type == 'pride' then
+        love.graphics.draw(self.image, self.quads[self.bframe], self.x, self.y, 0, self.scale, 1.5, self.IW/2, self.IH/2)
+    else
+        love.graphics.draw(self.image, self.quads[self.bframe], self.x, self.y+50, 0, self.scale, 1.5, self.IW/2, self.IH/2)
+    end
     if Debug_Vision then
         love.graphics.print(self.hp, -gw/2, (-gh/2)+60)
         love.graphics.print(tostring(self.guardtime), -gw/2, (-gh/2)+120)
         love.graphics.print(tostring(self.currentguard), -gw/2, (-gh/2)+(140))
         for i=1, #self.guard do
-            love.graphics.print(tostring(self.guard[i]), -gw/2, (-gh/2)+(140+(i*20)))
+            love.graphics.print(tostring(self.guard[i]), -gw/2+50, (-gh/2)+(140+(i*20)))
         end
         love.graphics.print(tostring(self.downtimer), -gw/2+100, (-gh/2)+20)
     end

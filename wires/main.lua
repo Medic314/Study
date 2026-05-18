@@ -3,7 +3,6 @@ Input = require("libraries.boipushy.input")
 Timer = require("libraries.hump.timer")
 Camera = require("libraries.STALKER-X.Camera")
 Utils = require("libraries.general.utils")
-Json = require('libraries.dkjson.dkjson')
 Physics = require("libraries.windfield")
 
 function love.load()
@@ -14,49 +13,22 @@ function love.load()
     local room_files = {}
     recursiveEnumerate('rooms', room_files)
     requireFiles(room_files)
-
+    
     local object_files = {}
     recursiveEnumerate('objects', object_files)
     requireFiles(object_files)
 
     timer = Timer()
-    input = Input()
+    input = Input() 
     camera = Camera()
+    camera:setFollowLerp(0.1)
 
-    paused = false
+    paused = false 
 
     current_room = nil
-    gotoRoom('Menu1')
+    gotoRoom('Stage')
     resize(1)
- 
-    function savescore(leaderboard, username, score, type)
-        type = type or 'great'
-        local filename = leaderboard
-        local scores = {}
-
-        if love.filesystem.getInfo(filename) then
-            local contents = love.filesystem.read(filename)
-            scores = Json.decode(contents) or {}
-        end
-
-        table.insert(scores, {
-            username = username,
-            score = score
-        })
-        if type == 'great' then
-            table.sort(scores, function(a, b)
-                return a.score > b.score
-            end)
-        else
-            table.sort(scores, function(a, b)
-                return a.score < b.score
-            end)
-        end
-
-        local encoded = Json.encode(scores, { indent = true })
-        love.filesystem.write(filename, encoded)
-    end
-end 
+end
 
 function love.update(dt)
     if current_room then current_room:update(dt) end
@@ -71,7 +43,7 @@ function resize(s)
     sx, sy = s, s
 end 
 
-function gotoRoom(room_type, ...)
+function gotoRoom(room_type, ...) 
     current_room = _G[room_type](...)
 end
 
